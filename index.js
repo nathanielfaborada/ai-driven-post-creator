@@ -80,7 +80,7 @@ run();
 // });
 
 
-schedule.scheduleJob('0 * * * *', () => {
+schedule.scheduleJob('0 6,18 * * *', () => {
   console.log("Scheduled job triggered at", new Date().toLocaleString());
-  run(); // your function that generates caption and posts to FB
+  run();
 });

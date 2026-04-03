@@ -1,8 +1,7 @@
 import "dotenv/config";
 import axios from "axios";
 import { GoogleGenAI } from "@google/genai";
-import * as fs from "node:fs";
-import FormData from "form-data";
+
 
 import schedule from "node-schedule";
 

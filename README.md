@@ -61,3 +61,9 @@ This service makes sure your page is always active, even on your busiest days.
 Interested? Reach out and we'll customize it for your business.
 
 > Message us to get started or ask any questions.
+
+---
+
+## Credits
+
+- **Mobile Legends Hero API** — Hero data and images provided by [ridwaanhall/api-mobilelegends](https://github.com/ridwaanhall/api-mobilelegends)

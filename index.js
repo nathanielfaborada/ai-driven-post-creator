@@ -40,7 +40,7 @@ async function generateCaption() {
 async function getHeroImage(heroName) {
   try {
     const encodedName = encodeURIComponent(heroName);
-    const res = await axios.get(`https://mlbb.rone.dev/api/heroes/${encodedName}`);
+    const res = await axios.get(`https://openmlbb.fastapicloud.dev/api/heroes/${encodedName}`);
     const headBig = res.data?.data?.records?.[0]?.data?.head_big;
     return headBig || null;
   } catch (err) {

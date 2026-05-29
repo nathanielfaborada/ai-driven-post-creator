@@ -67,123 +67,105 @@ async function runMLBB() {
 }
 
 // ─────────────────────────────────────────────
-// SHOPEE — every hour, NO Gemini, template lang
+// SHOPEE — every hour, NO Gemini, NO API fetch
+// Gumagamit ng Shopee Search URL + affiliate tag
+// Facebook mismo ang mag-ge-generate ng preview!
 // ─────────────────────────────────────────────
 
 const SHOPEE_CATEGORIES = [
-  { keyword: "shoes",      emoji: "👟", label: "Shoes",      tags: "#Shoes #ShoePH #Footwear"         },
-  { keyword: "polo shirt", emoji: "👔", label: "Polo Shirt", tags: "#PoloShirt #MensFashion #OOTD"    },
-  { keyword: "t-shirt",    emoji: "👕", label: "T-Shirt",    tags: "#TShirt #StreetWear #CasualFit"   },
-  { keyword: "shorts",     emoji: "🩳", label: "Shorts",     tags: "#Shorts #SummerFit #CasualWear"   },
-  { keyword: "pants",      emoji: "👖", label: "Pants",      tags: "#Pants #SlacksPH #FashionPH"      },
+  {
+    keyword: "shoes",
+    searchUrl: "https://shopee.ph/search?keyword=shoes&sortBy=sales",
+    emoji: "👟",
+    label: "Shoes",
+    tags: "#Shoes #ShoePH #Footwear #BackToSchool",
+  },
+  {
+    keyword: "polo shirt",
+    searchUrl: "https://shopee.ph/search?keyword=polo+shirt&sortBy=sales",
+    emoji: "👔",
+    label: "Polo Shirt",
+    tags: "#PoloShirt #MensFashion #OOTD #BackToSchool",
+  },
+  {
+    keyword: "t-shirt",
+    searchUrl: "https://shopee.ph/search?keyword=t-shirt&sortBy=sales",
+    emoji: "👕",
+    label: "T-Shirt",
+    tags: "#TShirt #StreetWear #CasualFit #BackToSchool",
+  },
+  {
+    keyword: "shorts",
+    searchUrl: "https://shopee.ph/search?keyword=shorts&sortBy=sales",
+    emoji: "🩳",
+    label: "Shorts",
+    tags: "#Shorts #SummerFit #CasualWear #BackToSchool",
+  },
+  {
+    keyword: "pants",
+    searchUrl: "https://shopee.ph/search?keyword=pants&sortBy=sales",
+    emoji: "👖",
+    label: "Pants",
+    tags: "#Pants #SlacksPH #FashionPH #BackToSchool",
+  },
 ];
 
-// Template captions — nag-ro-rotate para hindi paulit-ulit
+// Build affiliate link gamit ang Shopee Search URL
+// Facebook will auto-generate a preview from the Shopee page!
+function buildSearchAffLink(category) {
+  const encoded = encodeURIComponent(category.searchUrl);
+  return `https://s.shopee.ph/an_redir?origin_link=${encoded}&affiliate_id=${AFFILIATE_ID}&sub_id=${category.keyword.replace(/\s+/g, "_")}`;
+}
+
+// 5 rotating caption templates — walang Gemini, walang API
 const CAPTION_TEMPLATES = [
-  (item, cat, price, link) =>
-    `${cat.emoji} Handa ka na ba sa Back to School? 🎒\n\n✨ ${item.name}\n💰 ₱${price} lang sa Shopee!\n\nI-click ang link para makuha na! 👇\n${link}\n\n#StyleHuntPH #Shopee #BackToSchool ${cat.tags}`,
+  (cat, link) =>
+    `${cat.emoji} Back to School na! Handa ka na ba ang outfit mo? 🎒\n\nTingnan ang pinakabagong ${cat.label} sa Shopee — best sellers, best prices!\n\n🛍️ I-click ang link para mag-browse! 👇\n${link}\n\n#StyleHuntPH #Shopee ${cat.tags}`,
 
-  (item, cat, price, link) =>
-    `${cat.emoji} Level up ang fit mo ngayong Back to School! 🔥\n\n🛍️ ${item.name}\n💸 ₱${price} — sulit na sulit!\n\nAvailable na sa Shopee! 👇\n${link}\n\n#StyleHuntPH #Shopee #FreshFit ${cat.tags}`,
+  (cat, link) =>
+    `Level up ang fit mo ngayong Back to School! 🔥\n\n${cat.emoji} Ang daming pagpipilian ng ${cat.label} sa Shopee!\nLahat affordable, lahat may libre shipping!\n\n👇 Shop na dito!\n${link}\n\n#StyleHuntPH #ShopeePH #FreshFit ${cat.tags}`,
 
-  (item, cat, price, link) =>
-    `Psst! 👀 May nakita akong magandang deal sa Shopee!\n\n${cat.emoji} ${item.name}\n💰 ₱${price} only!\n\nBili na bago maubusan! 🛒\n${link}\n\n#StyleHuntPH #ShopeePH #DealAlert ${cat.tags}`,
+  (cat, link) =>
+    `Psst! 👀 Naghahanap ng magandang ${cat.label}?\n\nNandito na ang sagot mo — pinaka-best selling ${cat.label} sa Shopee PH! ${cat.emoji}\n\nI-click na! 🛒\n${link}\n\n#StyleHuntPH #DealAlert #ShopeePH ${cat.tags}`,
 
-  (item, cat, price, link) =>
-    `Back to School outfit check! ✅\n\n${cat.emoji} ${item.name}\n💵 ₱${price} — affordable at maganda pa!\n\nI-order na sa Shopee! 🛍️\n${link}\n\n#StyleHuntPH #Shopee #BackToSchool2025 ${cat.tags}`,
+  (cat, link) =>
+    `${cat.emoji} Outfit check! ✅\n\nBack to School season na — siguraduhing fresh ang fit mo!\nI-browse ang mga ${cat.label} sa Shopee ngayon!\n\n🔗 Link dito 👇\n${link}\n\n#StyleHuntPH #Shopee #BackToSchool2025 ${cat.tags}`,
 
-  (item, cat, price, link) =>
-    `Ang ganda nito, 'di ba? 😍\n\n${cat.emoji} ${item.name}\n🏷️ ₱${price} lang!\n\nMakikita mo ito sa Shopee — i-click ang link! 👇\n${link}\n\n#StyleHuntPH #ShopeePH #OOTDph ${cat.tags}`,
+  (cat, link) =>
+    `Ang daming magagandang ${cat.label} sa Shopee! 😍 ${cat.emoji}\n\nAffordable, trendy, at mabilis pang ma-deliver!\nPerfect para sa Back to School season!\n\n👇 I-check na!\n${link}\n\n#StyleHuntPH #OOTDph #ShopeePH ${cat.tags}`,
 ];
 
-let categoryIndex  = 0;
-let templateIndex  = 0;
-
-function buildAffiliateLink(shopid, itemid, name) {
-  const slug = name
-    .replace(/[^a-z0-9\s]/gi, "")
-    .replace(/\s+/g, "-")
-    .toLowerCase()
-    .slice(0, 60);
-  const productUrl = `https://shopee.ph/${slug}-i.${shopid}.${itemid}`;
-  const encoded = encodeURIComponent(productUrl);
-  return `https://s.shopee.ph/an_redir?origin_link=${encoded}&affiliate_id=${AFFILIATE_ID}&sub_id=stylehunt`;
-}
-
-async function fetchShopeeProducts(keyword) {
-  try {
-    const res = await axios.get(
-      "https://shopee.ph/api/v4/search/search_items",
-      {
-        params: {
-          keyword,
-          limit: 30,
-          by: "sales",
-          order: "desc",
-          page_type: "search",
-          version: 2,
-          newest: 0,
-        },
-        headers: {
-          "accept": "application/json",
-          "x-api-source": "pc",
-          "x-shopee-language": "en",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36",
-          "Referer": "https://shopee.ph/",
-        },
-        timeout: 10000,
-      }
-    );
-    const items = res.data?.items;
-    if (!items?.length) throw new Error("No items returned");
-    return items;
-  } catch (err) {
-    console.error("Shopee fetch error:", err.message);
-    return null;
-  }
-}
+let categoryIndex = 0;
+let templateIndex = 0;
 
 async function runShopee() {
   // Rotate category
   const category = SHOPEE_CATEGORIES[categoryIndex % SHOPEE_CATEGORIES.length];
   categoryIndex++;
 
-  console.log(`\n🛍️ [SHOPEE] Fetching ${category.label} products...`);
-  const items = await fetchShopeeProducts(category.keyword);
+  // Build affiliate link — Shopee Search URL + affiliate tag
+  // No API call needed! Facebook generates preview automatically.
+  const affLink = buildSearchAffLink(category);
 
-  if (!items) {
-    console.error("No products found, skipping post.");
-    return;
-  }
-
-  // Pick random item from top 10 best sellers
-  const pool = items.slice(0, 10);
-  const item  = pool[Math.floor(Math.random() * pool.length)].item_basic;
-
-  const price    = Math.round(item.price / 100000).toLocaleString();
-  const imageUrl = item.image ? `https://cf.shopee.ph/file/${item.image}` : null;
-  const affLink  = buildAffiliateLink(item.shopid, item.itemid, item.name);
-
-  // Rotate caption template — no Gemini needed!
+  // Rotate caption template
   const template = CAPTION_TEMPLATES[templateIndex % CAPTION_TEMPLATES.length];
   templateIndex++;
-  const caption = template(item, category, price, affLink);
+  const caption = template(category, affLink);
 
-  console.log(`Product : ${item.name}`);
-  console.log(`Price   : ₱${price}`);
-  console.log(`Category: ${category.label}`);
-  console.log(`Image   : ${imageUrl ?? "none"}`);
+  console.log(`\n🛍️ [SHOPEE] Posting ${category.label}...`);
+  console.log(`Link    : ${affLink}`);
   console.log(`Caption :\n${caption}`);
 
-  console.log("Posting to Facebook...");
-  await postToFacebook(caption, imageUrl);
+  // Post as TEXT ONLY — Facebook will auto-generate
+  // the Shopee preview (image + title + description)!
+  await postTextToFacebook(caption);
 }
 
 // ─────────────────────────────────────────────
-// FACEBOOK — shared post function
+// FACEBOOK — post functions
 // ─────────────────────────────────────────────
 
+// For MLBB — posts with image
 async function postToFacebook(caption, imageUrl) {
   if (!caption) return;
   try {
@@ -196,18 +178,24 @@ async function postToFacebook(caption, imageUrl) {
       });
       console.log("✅ Posted with image! Post ID:", res.data.id);
     } else {
-      const url = `https://graph.facebook.com/v24.0/${FB_PAGE_ID}/feed`;
-      const res = await axios.post(url, {
-        message: caption,
-        access_token: FB_PAGE_ACCESS_TOKEN,
-      });
-      console.log("✅ Posted (text only)! Post ID:", res.data.id);
+      await postTextToFacebook(caption);
     }
   } catch (err) {
-    console.error(
-      "❌ Error posting to Facebook:",
-      err.response?.data || err.message
-    );
+    console.error("❌ FB error:", err.response?.data || err.message);
+  }
+}
+
+// For Shopee — posts text + link (Facebook auto-generates Shopee preview)
+async function postTextToFacebook(caption) {
+  try {
+    const url = `https://graph.facebook.com/v24.0/${FB_PAGE_ID}/feed`;
+    const res = await axios.post(url, {
+      message: caption,
+      access_token: FB_PAGE_ACCESS_TOKEN,
+    });
+    console.log("✅ Posted! Post ID:", res.data.id);
+  } catch (err) {
+    console.error("❌ FB error:", err.response?.data || err.message);
   }
 }
 
@@ -215,7 +203,7 @@ async function postToFacebook(caption, imageUrl) {
 // SCHEDULES
 // ─────────────────────────────────────────────
 
-// Uncomment para mag-test agad:
+// Uncomment to test immediately:
 // runMLBB();
 // runShopee();
 
@@ -225,7 +213,7 @@ schedule.scheduleJob("0 6 * * *", () => {
   runMLBB();
 });
 
-// Shopee — every hour, NO Gemini
+// Shopee — every hour, zero API calls, zero Gemini
 schedule.scheduleJob("0 * * * *", () => {
   console.log("⏰ [SHOPEE] Triggered:", new Date().toLocaleString());
   runShopee();
@@ -233,6 +221,7 @@ schedule.scheduleJob("0 * * * *", () => {
 
 console.log("🚀 StyleHunt Bot is running!");
 console.log("📅 MLBB post   : 6:00 AM daily (Gemini)");
-console.log("📅 Shopee post : every hour (template, no Gemini)");
+console.log("📅 Shopee post : every hour (no API, no Gemini, fully automatic)");
 console.log(`📦 Categories  : ${SHOPEE_CATEGORIES.map(c => c.label).join(", ")}`);
 console.log(`📝 Templates   : ${CAPTION_TEMPLATES.length} rotating captions`);
+console.log("🔗 Method      : Shopee Search URL + affiliate tag → FB auto-preview");

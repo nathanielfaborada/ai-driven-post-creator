@@ -63,7 +63,7 @@ async function generateCaption_NanoFacts() {
       Requirements:
       - Random Chemical element name
       - Description must be 1–5 sentences only
-      - Description must be motivational/inspirational
+      - Description must be educational and informative
       - Naturally include searchable keywords like the element's name, its chemical symbol, "periodic table", and "chemistry" so the post ranks well in search and Facebook's algorithm
       - Use emojis
       - End with exactly 5 relevant, high-traffic hashtags related to Chemistry, Science, the periodic table, 
@@ -84,6 +84,23 @@ async function generateCaption_NanoFacts() {
     console.error("Error generating Nano Facts caption:", err.message);
     return { elementName: null, caption: null };
   }
+}
+
+
+function toUnicodeBold(str) {
+  const boldMap = {
+    a: "𝗮", b: "𝗯", c: "𝗰", d: "𝗱", e: "𝗲", f: "𝗳", g: "𝗴", h: "𝗵", i: "𝗶",
+    j: "𝗷", k: "𝗸", l: "𝗹", m: "𝗺", n: "𝗻", o: "𝗼", p: "𝗽", q: "𝗾", r: "𝗿",
+    s: "𝘀", t: "𝘁", u: "𝘂", v: "𝘃", w: "𝘄", x: "𝘅", y: "𝘆", z: "𝘇",
+    A: "𝗔", B: "𝗕", C: "𝗖", D: "𝗗", E: "𝗘", F: "𝗙", G: "𝗚", H: "𝗛", I: "𝗜",
+    J: "𝗝", K: "𝗞", L: "𝗟", M: "𝗠", N: "𝗡", O: "𝗢", P: "𝗣", Q: "𝗤", R: "𝗥",
+    S: "𝗦", T: "𝗧", U: "𝗨", V: "𝗩", W: "𝗪", X: "𝗫", Y: "𝗬", Z: "𝗭",
+    0: "𝟬", 1: "𝟭", 2: "𝟮", 3: "𝟯", 4: "𝟰", 5: "𝟱", 6: "𝟲", 7: "𝟳", 8: "𝟴", 9: "𝟵",
+  };
+ 
+  return str.replace(/\*\*(.+?)\*\*/g, (_, inner) =>
+    inner.split("").map((ch) => boldMap[ch] || ch).join("")
+  );
 }
 
 async function getHeroImage(heroName) {
@@ -144,6 +161,8 @@ async function runAsta() {
   console.log("[Asta Plays] Hero:", heroName);
   console.log("[Asta Plays] Caption:\n", caption);
 
+  const formattedCaption = toUnicodeBold(caption);
+
   let imageUrl = null;
   if (heroName) {
     console.log("[Asta Plays] Fetching hero image...");
@@ -152,7 +171,7 @@ async function runAsta() {
   }
 
   console.log("[Asta Plays] Posting to Facebook...");
-  await postToFacebook(caption, imageUrl, FB_PAGE_ID_ASTA_PLAYS, FB_PAGE_ACCESS_TOKEN_ASTA_PLAYS);
+  await postToFacebook(formattedCaption, imageUrl, FB_PAGE_ID_ASTA_PLAYS, FB_PAGE_ACCESS_TOKEN_ASTA_PLAYS);
 }
 
 async function runNano() {
@@ -171,7 +190,8 @@ async function runNano() {
   const imageUrl = null;
 
   console.log("[Nano Facts] Posting to Facebook...");
-  await postToFacebook(caption, imageUrl, FB_PAGE_ID_NANO_FACTS, FB_PAGE_ACCESS_TOKEN_NANO_FACTS);
+  const formattedCaption = toUnicodeBold(caption);
+  await postToFacebook(formattedCaption, imageUrl, FB_PAGE_ID_NANO_FACTS, FB_PAGE_ACCESS_TOKEN_NANO_FACTS);
 }
 
 // Run once immediately on startup

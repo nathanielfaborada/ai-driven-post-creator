@@ -55,19 +55,27 @@ async function generateCaption_NanoFacts() {
     const response = await aiNanoFacts.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `
-      Generate a short, SEO-optimized Chemical element chart output in this exact structure:
+      Generate a short, SEO-optimized, text-only Facebook post about a random chemical element in this exact structure:
  
       ELEMENT: {element name only, no extra text}
-      CAPTION: **What is {element name}?** {Short description of that element}
+      CAPTION:
+      **{Element name} – {short catchy subtitle, e.g. "The Glowing Noble Gas"}**
+ 
+      {One engaging hook question or fact starting with "Did you know..." about the element, 1 sentence, with emoji}
+ 
+      {Main description: 2-4 sentences about the element's properties, uses, or interesting facts. Must be motivational/inspirational in tone. Use emojis.}
+ 
+      **Learn Science in Seconds** ⚛️
+      New Periodic Table facts every week!
+ 
+      Like, Share & Follow for more fun and educational science content. 🔬
+ 
+      Keywords: {8-12 comma-separated SEO keywords related to the element, chemistry, and science, e.g. element name, chemical symbol, "noble gas"/element category, "periodic table", "chemistry", "science facts", "STEM", "atomic structure"}
  
       Requirements:
-      - Random Chemical element name
-      - Description must be 1–5 sentences only
-      - Description must be educational and informative
-      - Naturally include searchable keywords like the element's name, its chemical symbol, "periodic table", and "chemistry" so the post ranks well in search and Facebook's algorithm
-      - Use emojis
-      - End with exactly 5 relevant, high-traffic hashtags related to Chemistry, Science, the periodic table, 
-        and the specific element (e.g. #Chemistry #Science #PeriodicTable plus element-specific tags)
+      - Random chemical element name
+      - Follow the exact structure above, including line breaks between sections
+      - End with exactly 5 relevant, high-traffic hashtags related to Chemistry, Science, the periodic table, and the specific element (e.g. #Chemistry #Science #PeriodicTable plus element-specific tags)
       `,
     });
 

@@ -20,17 +20,26 @@ async function generateCaption_AstaPlays() {
     const response = await aiAstaplays.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `
-      Generate a short, SEO-optimized Mobile Legends hero output in this exact structure:
+      Generate a short, SEO-optimized, text-only Facebook post about a random Mobile Legends hero in this exact structure:
  
       HERO: {hero name only, no extra text}
-      CAPTION: **Who is {hero name}?** {Short description of that hero}
+      CAPTION:
+      **{Hero name} – {short catchy subtitle, e.g. "The Unstoppable Assassin"}**
+ 
+      {One engaging hook question or fact starting with "Did you know..." about the hero, 1 sentence, with emoji}
+ 
+      {Main description: 2-4 sentences about the hero's role, abilities, or playstyle. Must be motivational/inspirational in tone. Use emojis.}
+ 
+      **Level Up Your Game** 🎮
+      New Mobile Legends hero spotlights every week!
+ 
+      Like, Share & Follow for more fun and epic MLBB content. ⚔️
+ 
+      Keywords: {8-12 comma-separated SEO keywords related to the hero, their role, and the game, e.g. hero name, role (Tank/Assassin/Mage/Marksman/Support/Fighter), "Mobile Legends", "MLBB", "gameplay tips", "hero guide", "esports"}
  
       Requirements:
       - Random Mobile Legends hero name
-      - Description must be 1–5 sentences only
-      - Description must be motivational/inspirational
-      - Naturally include searchable keywords like the hero's name, "Mobile Legends", "MLBB", and the hero's role (e.g. Tank, Assassin, Mage, Marksman, Support, Fighter) so the post ranks well in search and Facebook's algorithm
-      - Use emojis
+      - Follow the exact structure above, including line breaks between sections
       - End with exactly 5 relevant, high-traffic hashtags related to Mobile Legends, MLBB, and the specific hero/role (e.g. #MobileLegends #MLBB #MLBBPh plus hero/role-specific tags)
       `,
     });

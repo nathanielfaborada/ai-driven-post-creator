@@ -76,7 +76,7 @@ async function generateCaption_AstaPlays() {
 async function generateCaption_NanoFacts() {
   try {
     const response = await aiNanoFacts.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: `
       Generate a short, SEO-optimized, text-only Facebook post about a random chemical element using this EXACT structure.
 

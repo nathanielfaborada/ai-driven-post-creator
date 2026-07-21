@@ -18,7 +18,7 @@ const FB_PAGE_ACCESS_TOKEN_NANO_FACTS = process.env.FB_PAGE_ACCESS_TOKEN_NANO_FA
 async function generateCaption_AstaPlays() {
   try {
     const response = await aiAstaplays.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: `
       Generate a short, SEO-optimized, text-only Facebook post about a random Mobile Legends: Bang Bang hero using the EXACT structure below.
 
@@ -78,58 +78,72 @@ async function generateCaption_NanoFacts() {
     const response = await aiNanoFacts.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `
-Generate a short, SEO-optimized, text-only Facebook post about a random chemical element using the EXACT structure below.
+      Generate a short, SEO-optimized, text-only Facebook post about a random chemical element using this EXACT structure.
 
-ELEMENT: {element name only}
+      ELEMENT: {element name only}
 
-TITLE:
-{Element Name} – {Short catchy subtitle, 4–8 words}
+      TITLE:
+      {Element Name} – {Short catchy subtitle, 4–8 words}
 
-CAPTION:
+      CAPTION:
 
-Did you know {one surprising fact about the element}? 🧪
+      Did you know {one surprising fact or engaging question about the element}? {1 relevant emoji}
 
-{Write ONLY 2 short sentences (under 200 characters total) explaining what the element is, why it's important, or where it's used. Make it exciting and easy to understand.}
+      {Write ONLY 2 short sentences (under 200 characters total) explaining what the element is, why it's important, or where it's used. Make it exciting, educational, and easy for anyone to understand. Include 1–2 relevant emojis. Avoid long paragraphs.}
 
-⚛️ Learn Science in Seconds
-New Periodic Table facts every week!
+      ⚛️ Learn Science in Seconds
+      New Periodic Table facts every week!
 
-👍 Like, Share & Follow Nano Facts for more science content.
+      👍 Like, Share & Follow Nano Facts for more science content.
 
-KEYWORDS:
-{10-15 comma-separated SEO keywords}
+      {10–15 comma-separated SEO keywords including the element name, chemical symbol, element category, periodic table, chemistry, science, STEM, science facts, education, and common uses}
 
-HASHTAGS:
-Exactly 5 hashtags:
-#Chemistry #Science #PeriodicTable #{ElementName} #ScienceFacts
+      Exactly 5 hashtags:
+      #Chemistry #Science #PeriodicTable #{ElementName} #ScienceFacts
+
+      Rules:
+      - Return plain text only.
+      - Do NOT include URLs or external links.
+      - Do NOT include donation requests or PayPal links.
+      - Keep the caption under 350 characters for better Facebook reach.
+      - Make the first sentence a strong hook.
+      - Use simple English suitable for all ages.
+      - Facts must be scientifically accurate.
+      - Use only 2–3 emojis total.
+      - Follow the exact formatting and line breaks shown above.
       `,
     });
 
     const text = response.text.trim();
 
-    const elementName =
-      text.match(/ELEMENT:\s*(.+)/i)?.[1]?.trim() || null;
+    const elementMatch = text.match(/ELEMENT:\s*(.+)/i);
+    const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
 
-    const title =
-      text.match(/TITLE:\s*([\s\S]*?)CAPTION:/i)?.[1]?.trim() || "";
+    const elementName = elementMatch ? elementMatch[1].trim() : null;
+    const caption = captionMatch ? captionMatch[1].trim() : text;
 
-    const caption =
-      text.match(/CAPTION:\s*([\s\S]*)/i)?.[1]?.trim() || "";
-
-    const finalCaption =
-      toUnicodeBold(title) + "\n\n" + caption;
-
-    return {
-      elementName,
-      caption: finalCaption,
-    };
+    return { elementName, caption };
   } catch (err) {
-    console.error(err);
-    return {
-      elementName: null,
-      caption: null,
-    };
+    console.error("Error generating Nano Facts caption:", err.message);
+    return { elementName: null, caption: null };
   }
+}
+
+
+function toUnicodeBold(str) {
+  const boldMap = {
+    a: "𝗮", b: "𝗯", c: "𝗰", d: "𝗱", e: "𝗲", f: "𝗳", g: "𝗴", h: "𝗵", i: "𝗶",
+    j: "𝗷", k: "𝗸", l: "𝗹", m: "𝗺", n: "𝗻", o: "𝗼", p: "𝗽", q: "𝗾", r: "𝗿",
+    s: "𝘀", t: "𝘁", u: "𝘂", v: "𝘃", w: "𝘄", x: "𝘅", y: "𝘆", z: "𝘇",
+    A: "𝗔", B: "𝗕", C: "𝗖", D: "𝗗", E: "𝗘", F: "𝗙", G: "𝗚", H: "𝗛", I: "𝗜",
+    J: "𝗝", K: "𝗞", L: "𝗟", M: "𝗠", N: "𝗡", O: "𝗢", P: "𝗣", Q: "𝗤", R: "𝗥",
+    S: "𝗦", T: "𝗧", U: "𝗨", V: "𝗩", W: "𝗪", X: "𝗫", Y: "𝗬", Z: "𝗭",
+    0: "𝟬", 1: "𝟭", 2: "𝟮", 3: "𝟯", 4: "𝟰", 5: "𝟱", 6: "𝟲", 7: "𝟳", 8: "𝟴", 9: "𝟵",
+  };
+ 
+  return str.replace(/\*\*(.+?)\*\*/g, (_, inner) =>
+    inner.split("").map((ch) => boldMap[ch] || ch).join("")
+  );
 }
 
 async function getHeroImage(heroName) {

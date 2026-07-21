@@ -20,28 +20,42 @@ async function generateCaption_AstaPlays() {
     const response = await aiAstaplays.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `
-      Generate a short, SEO-optimized, text-only Facebook post about a random Mobile Legends hero in this exact structure:
- 
-      HERO: {hero name only, no extra text}
+      Generate a short, SEO-optimized, text-only Facebook post about a random Mobile Legends: Bang Bang hero using the EXACT structure below.
+
+      HERO: {hero name only}
+
+      TITLE:
+      {Hero Name} – {Short catchy subtitle, 4–8 words}
+
       CAPTION:
-      **{Hero name} – {short catchy subtitle, e.g. "The Unstoppable Assassin"}**
- 
-      {One engaging hook question or fact starting with "Did you know..." about the hero, 1 sentence, with emoji}
- 
-      {Main description: 2-4 sentences about the hero's role, abilities, or playstyle. Must be motivational/inspirational in tone. Use emojis.}
- 
-      **Level Up Your Game** 🎮
+
+      Did you know {one surprising fact or engaging question about the hero}? 🎮
+
+      {Write ONLY 2 short sentences (under 200 characters total) describing the hero's role, signature abilities, strengths, or best playstyle. Keep it exciting, motivational, and beginner-friendly. Use only 1–2 relevant emojis.}
+
+      🎮 Level Up Your Game
       New Mobile Legends hero spotlights every week!
- 
-      Like, Share & Follow for more fun and epic MLBB content. ⚔️
- 
-      Keywords: {8-12 comma-separated SEO keywords related to the hero, their role, and the game, e.g. hero name, role (Tank/Assassin/Mage/Marksman/Support/Fighter), "Mobile Legends", "MLBB", "gameplay tips", "hero guide", "esports"}
- 
-      Requirements:
-      - Random Mobile Legends hero name
-      - Follow the exact structure above, including line breaks between sections
-      - End with exactly 5 relevant, high-traffic hashtags related to Mobile Legends, MLBB, and the specific hero/role (e.g. #MobileLegends #MLBB #MLBBPh plus hero/role-specific tags)
-      `,
+
+      👍 Like, Share & Follow for more MLBB guides and hero spotlights.
+
+      KEYWORDS:
+      {10–15 comma-separated SEO keywords including hero name, role, Mobile Legends, MLBB, gameplay, build guide, hero guide, ranked, esports, MOBA, strategy}
+
+      HASHTAGS:
+      Exactly 5 hashtags:
+      #MobileLegends #MLBB #MLBBPH #{HeroName} #{HeroRole}
+
+      Rules:
+      - Return plain text only.
+      - Do NOT include URLs, links, Discord servers, or donation requests.
+      - Keep the entire caption under 350 characters for better Facebook reach.
+      - The first sentence must be a strong hook starting with "Did you know".
+      - Use simple English that anyone can understand.
+      - Information must be accurate based on the latest Mobile Legends hero lore and gameplay.
+      - Use only 2–3 emojis total.
+      - Do not mention skins unless they are relevant to the hero's identity.
+      - Follow the exact formatting and line breaks shown above.
+            `,
     });
 
     const text = response.text.trim();
@@ -64,27 +78,41 @@ async function generateCaption_NanoFacts() {
     const response = await aiNanoFacts.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `
-      Generate a short, SEO-optimized, text-only Facebook post about a random chemical element in this exact structure:
- 
-      ELEMENT: {element name only, no extra text}
+      Generate a short, SEO-optimized, text-only Facebook post about a random chemical element using this EXACT structure.
+
+      ELEMENT: {element name only}
+
+      TITLE:
+      {Element Name} – {Short catchy subtitle, 4–8 words}
+
       CAPTION:
-      **{Element name} – {short catchy subtitle, e.g. "The Glowing Noble Gas"}**
- 
-      {One engaging hook question or fact starting with "Did you know..." about the element, 1 sentence, with emoji}
- 
-      {Main description: 2-4 sentences about the element's properties, uses, or interesting facts. Must be motivational/inspirational in tone. Use emojis.}
- 
-      **Learn Science in Seconds** ⚛️
+
+      Did you know {one surprising fact or engaging question about the element}? {1 relevant emoji}
+
+      {Write ONLY 2 short sentences (under 200 characters total) explaining what the element is, why it's important, or where it's used. Make it exciting, educational, and easy for anyone to understand. Include 1–2 relevant emojis. Avoid long paragraphs.}
+
+      ⚛️ Learn Science in Seconds
       New Periodic Table facts every week!
- 
-      Like, Share & Follow for more fun and educational science content. 🔬
- 
-      Keywords: {8-12 comma-separated SEO keywords related to the element, chemistry, and science, e.g. element name, chemical symbol, "noble gas"/element category, "periodic table", "chemistry", "science facts", "STEM", "atomic structure"}
- 
-      Requirements:
-      - Random chemical element name
-      - Follow the exact structure above, including line breaks between sections
-      - End with exactly 5 relevant, high-traffic hashtags related to Chemistry, Science, the periodic table, and the specific element (e.g. #Chemistry #Science #PeriodicTable plus element-specific tags)
+
+      👍 Like, Share & Follow Nano Facts for more science content.
+
+      KEYWORDS:
+      {10–15 comma-separated SEO keywords including the element name, chemical symbol, element category, periodic table, chemistry, science, STEM, science facts, education, and common uses}
+
+      HASHTAGS:
+      Exactly 5 hashtags:
+      #Chemistry #Science #PeriodicTable #{ElementName} #ScienceFacts
+
+      Rules:
+      - Return plain text only.
+      - Do NOT include URLs or external links.
+      - Do NOT include donation requests or PayPal links.
+      - Keep the caption under 350 characters for better Facebook reach.
+      - Make the first sentence a strong hook.
+      - Use simple English suitable for all ages.
+      - Facts must be scientifically accurate.
+      - Use only 2–3 emojis total.
+      - Follow the exact formatting and line breaks shown above.
       `,
     });
 
@@ -215,13 +243,13 @@ async function runNano() {
 runAsta();
 runNano();
 
-// Schedule recurring runs at 6 AM and 6 PM daily
-schedule.scheduleJob('0 6,18 * * *', () => {
-  console.log("Scheduled job triggered at", new Date().toLocaleString());
+
+schedule.scheduleJob('0 10,19 * * *', () => {
+  console.log("Asta scheduled:", new Date().toLocaleString());
   runAsta();
 });
 
-schedule.scheduleJob('0 */2 * * *', () => {
-  console.log("Scheduled job triggered at", new Date().toLocaleString());
+schedule.scheduleJob('0 6,10,14,18,21 * * *', () => {
+  console.log("Nano scheduled:", new Date().toLocaleString());
   runNano();
 });

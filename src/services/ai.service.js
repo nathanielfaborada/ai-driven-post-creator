@@ -4,7 +4,7 @@ import { config } from "../config/env.js";
 const aiAstaplays = new GoogleGenAI({ apiKey: config.astaPlays.apiKey });
 const aiNanoFacts = new GoogleGenAI({ apiKey: config.nanoFacts.apiKey });
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
 
 /**
  * Generate MLBB Facebook Post Caption for Asta Plays.

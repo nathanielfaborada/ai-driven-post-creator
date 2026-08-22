@@ -4,6 +4,8 @@ import { config } from "../config/env.js";
 const aiAstaplays = new GoogleGenAI({ apiKey: config.astaPlays.apiKey });
 const aiNanoFacts = new GoogleGenAI({ apiKey: config.nanoFacts.apiKey });
 
+const GEMINI_MODEL = "gemini-2.5-flash";
+
 /**
  * Generate MLBB Facebook Post Caption for Asta Plays.
  * @returns {Promise<{ heroName: string|null, caption: string|null }>}
@@ -11,7 +13,7 @@ const aiNanoFacts = new GoogleGenAI({ apiKey: config.nanoFacts.apiKey });
 export async function generateCaptionAstaPlays() {
   try {
     const response = await aiAstaplays.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: GEMINI_MODEL,
       contents: `
       Generate a short, SEO-optimized, text-only Facebook post about a random Mobile Legends: Bang Bang hero using the EXACT structure below.
 
@@ -72,7 +74,7 @@ export async function generateCaptionAstaPlays() {
 export async function generateCaptionNanoFacts() {
   try {
     const response = await aiNanoFacts.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: GEMINI_MODEL,
       contents: `
       Generate a short, SEO-optimized, text-only Facebook post about a random chemical element using this EXACT structure.
 
@@ -132,7 +134,7 @@ export async function generateCaptionNanoFacts() {
  * @param {"astaPlays"|"nanoFacts"} [params.page]
  * @returns {Promise<string|null>}
  */
-export async function generateCommentReply({ userComment, postTopic = "our Facebook page", page = "astaPlays" }) {
+export async function generateCommentReply({ userComment, postTopic = "our Facebook page", page = "astaPlays", userName = null }) {
   try {
     const aiInstance = page === "nanoFacts" ? aiNanoFacts : aiAstaplays;
     const persona = page === "nanoFacts"
@@ -140,15 +142,17 @@ export async function generateCommentReply({ userComment, postTopic = "our Faceb
       : "Admin of Asta Plays (a gaming page focused on Mobile Legends: Bang Bang)";
 
     const response = await aiInstance.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: GEMINI_MODEL,
       contents: `
       You are the friendly, helpful, and engaging Facebook page ${persona}.
+      ${userName ? `The commenter's name is "${userName}".` : ""}
       A user commented: "${userComment}"
       The post topic is: "${postTopic}".
 
       Instructions:
-      - Reply in a natural, casual, friendly Taglish or English tone.
-      - Keep it short (1-2 sentences).
+      - Reply in natural, casual, and friendly English ONLY (do not use Tagalog or Taglish).
+      - Keep it short, engaging, and conversational (1-2 sentences).
+      ${userName ? `- If natural, greet them briefly by their first name (e.g., "Thanks, John!" or "Hey Sarah,").` : ""}
       - Include 1 relevant emoji.
       - Do not include external links or spam.
       - Return plain text only.

@@ -1,5 +1,8 @@
 import axios from "axios";
 
+const GRAPH_API_VERSION = "v26.0";
+const BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
+
 /**
  * Post a photo or text caption to Facebook Page Feed.
  * @param {Object} params
@@ -22,7 +25,7 @@ export async function postToFacebook({ caption, imageUrl, pageId, pageToken }) {
   try {
     if (imageUrl) {
       // Post with image using Photos API
-      const url = `https://graph.facebook.com/v24.0/${pageId}/photos`;
+      const url = `${BASE_URL}/${pageId}/photos`;
       const res = await axios.post(url, {
         url: imageUrl,
         message: caption,
@@ -32,7 +35,7 @@ export async function postToFacebook({ caption, imageUrl, pageId, pageToken }) {
       return res.data.id;
     } else {
       // Fallback: post text only
-      const url = `https://graph.facebook.com/v24.0/${pageId}/feed`;
+      const url = `${BASE_URL}/${pageId}/feed`;
       const res = await axios.post(url, {
         message: caption,
         access_token: pageToken,
@@ -61,7 +64,7 @@ export async function getRecentPostsWithComments({ pageId, pageToken, limit = 5 
   }
 
   try {
-    const url = `https://graph.facebook.com/v24.0/${pageId}/feed`;
+    const url = `${BASE_URL}/${pageId}/feed`;
     const res = await axios.get(url, {
       params: {
         fields: "id,message,created_time,comments.limit(25){id,message,from,created_time,comments{id,from}}",
@@ -92,7 +95,7 @@ export async function replyToComment({ commentId, message, pageToken }) {
   }
 
   try {
-    const url = `https://graph.facebook.com/v24.0/${commentId}/comments`;
+    const url = `${BASE_URL}/${commentId}/comments`;
     const res = await axios.post(url, {
       message,
       access_token: pageToken,

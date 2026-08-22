@@ -91,6 +91,7 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
         userComment: commentMessage,
         postTopic: postCaption,
         page: pageKey,
+        userName: comment.from?.name || null,
       });
 
       if (aiReply) {

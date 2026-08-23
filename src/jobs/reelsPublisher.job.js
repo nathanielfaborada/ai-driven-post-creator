@@ -7,6 +7,7 @@ import {
   markArchiveItemReposted,
 } from "../services/telegram.service.js";
 import { publishFacebookReel } from "../services/facebook.service.js";
+import { generateReelCaptionNanoFacts } from "../services/ai.service.js";
 import { toUnicodeBold } from "../utils/formatters.js";
 
 /**
@@ -32,11 +33,16 @@ export async function runReelsPublisherJob() {
       return;
     }
 
+    console.log(`[Reels Publisher] 🧠 Generating AI SEO Reel Caption (Input Context: "${nextItem.caption || "None"}")`);
+    const { topicName, caption: generatedCaption } = await generateReelCaptionNanoFacts(nextItem.caption || "");
+    const finalCaption = generatedCaption || toUnicodeBold(nextItem.caption || "");
+    console.log(`[Reels Publisher] Topic:`, topicName);
+    console.log(`[Reels Publisher] Final Caption:\n${finalCaption}\n`);
+
     console.log(`[Reels Publisher] 🚀 Publishing Reel to Facebook (Page ID: ${config.nanoFacts.pageId})...`);
-    const formattedCaption = toUnicodeBold(nextItem.caption || "");
     const fbRes = await publishFacebookReel({
       videoBuffer,
-      caption: formattedCaption,
+      caption: finalCaption,
       pageId: config.nanoFacts.pageId,
       pageToken: config.nanoFacts.pageToken,
     });
@@ -49,12 +55,12 @@ export async function runReelsPublisherJob() {
       console.error("[Reels Publisher] ❌ Facebook publishing failed. Message kept in queue for retry.", fbRes.error);
     }
   } else {
-    // 2. Fallback: Queue is empty -> Pick from Archive
-    console.log("[Reels Publisher] ℹ️ Queue is empty! Checking Archive for Evergreen content...");
-    const archiveItem = getRandomArchiveItem();
+    // 2. Fallback: Queue is empty -> Pick from Archive (Requires at least 10 videos)
+    const MIN_ARCHIVE_COUNT = 10;
+    const archiveItem = getRandomArchiveItem(MIN_ARCHIVE_COUNT);
 
     if (!archiveItem) {
-      console.log("[Reels Publisher] 📭 Archive is also empty (no past reels recorded yet). Waiting for new uploads in Channel 1.");
+      console.log(`[Reels Publisher] ℹ️ Queue is empty and Archive has fewer than ${MIN_ARCHIVE_COUNT} videos. At least ${MIN_ARCHIVE_COUNT} archived videos are required before recycling starts to avoid repetitive posts. Waiting for new uploads in Channel 1.`);
       return;
     }
 
@@ -66,11 +72,16 @@ export async function runReelsPublisherJob() {
       return;
     }
 
+    console.log(`[Reels Publisher] 🧠 Generating fresh AI SEO Caption for archived reel...`);
+    const { topicName, caption: generatedCaption } = await generateReelCaptionNanoFacts(archiveItem.caption || "");
+    const finalCaption = generatedCaption || toUnicodeBold(archiveItem.caption || "");
+    console.log(`[Reels Publisher] Topic:`, topicName);
+    console.log(`[Reels Publisher] Final Caption:\n${finalCaption}\n`);
+
     console.log(`[Reels Publisher] 🚀 Reposting archived Reel to Facebook...`);
-    const formattedCaption = toUnicodeBold(archiveItem.caption || "");
     const fbRes = await publishFacebookReel({
       videoBuffer,
-      caption: formattedCaption,
+      caption: finalCaption,
       pageId: config.nanoFacts.pageId,
       pageToken: config.nanoFacts.pageToken,
     });

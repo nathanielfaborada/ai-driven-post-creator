@@ -147,6 +147,79 @@ export async function generateCaptionNanoFacts() {
 }
 
 /**
+ * Generate an AI-powered SEO & engagement caption for Facebook Reels based on the incoming Telegram caption/topic.
+ * @param {string} [initialTopic] - Topic or raw caption provided via Telegram
+ * @returns {Promise<{ topicName: string|null, caption: string|null }>}
+ */
+export async function generateReelCaptionNanoFacts(initialTopic = "") {
+  try {
+    const topicPrompt = initialTopic?.trim()
+      ? `The creator provided this topic/context for the video reel: "${initialTopic.trim()}". Generate an engaging, high-retention Facebook Reel caption based specifically on this video topic.`
+      : `Generate a short, SEO-optimized Facebook Reel caption about a fascinating topic in SCIENCE & TECHNOLOGY. Pick randomly from diverse fields (Astronomy, Quantum Physics, Biology, Nanotechnology, AI, Chemistry, Deep Space, etc.).`;
+
+    const response = await aiNanoFacts.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: `
+      ${topicPrompt}
+
+      Use this EXACT structure:
+
+      TOPIC: {topic name only}
+
+      TITLE:
+      {Topic Name} – {Short catchy subtitle, 4–8 words}
+
+      CAPTION:
+
+      Did you know {one mind-blowing fact or engaging hook question about the topic}? {1 relevant emoji}
+
+      {Write ONLY 2 short, fascinating sentences explaining how it works, why it matters, or its futuristic impact. Make it educational, exciting, and accessible to anyone. Use 1–2 emojis.}
+
+      🔓 Unlock The Nano Facts Science Library 🔬📚
+      Love learning? Help us unlock exclusive Science E-Books, Physics & Chemistry Study Guides, Biology materials, and downloadable PDF resources!
+
+      🌟 Support our page & become a Subscriber:
+      👉 https://www.facebook.com/nanoscie/subscribe/
+
+      👇 Comment below: What science topic should be included in our next exclusive study guide?
+
+      {10–15 comma-separated SEO keywords directly related to this topic, field of science, technology, research, discovery, education, STEM}
+
+      Exactly 5 hashtags matching the topic:
+      #Science #Technology #NanoFacts #STEM #{TopicOrField}
+
+      Rules:
+      - The first sentence must be a strong hook starting with "Did you know".
+      - Facts must be scientifically accurate and up-to-date.
+      - Keep sentences punchy and engaging for short-form video viewers.
+      - Follow the exact formatting and line breaks shown above.
+      `,
+    });
+
+    const text = response.text.trim();
+    const topicMatch = text.match(/(?:TOPIC|ELEMENT):\s*(.+)/i);
+    const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
+    const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
+
+    const topicName = topicMatch ? topicMatch[1].trim() : (initialTopic || null);
+    const rawTitle = titleMatch ? titleMatch[1].trim() : null;
+    const rawBody = captionMatch ? captionMatch[1].trim() : text;
+
+    const boldTitle = rawTitle ? stringToUnicodeBold(rawTitle) : "";
+    const boldBody = toUnicodeBold(rawBody);
+    const caption = boldTitle ? `${boldTitle}\n\n${boldBody}` : boldBody;
+
+    return { topicName, caption };
+  } catch (err) {
+    console.error("Error generating Nano Facts Reel caption:", err.message);
+    return {
+      topicName: initialTopic || null,
+      caption: initialTopic ? toUnicodeBold(initialTopic) : null,
+    };
+  }
+}
+
+/**
  * Generate an AI response to a user's Facebook comment.
  * @param {Object} params
  * @param {string} params.userComment

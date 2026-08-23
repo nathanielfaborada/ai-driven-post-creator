@@ -122,7 +122,7 @@ flowchart TD
 * **FIFO Processing:** When the cron trigger runs, the earliest uploaded video in the queue is processed first.
 * **3-Phase Handshake:** Uses Meta's chunked video reels upload endpoints (`start` $\rightarrow$ `binary data transfer` $\rightarrow$ `finish/publish`).
 * **Archive & Cleanup:** On successful upload, the bot calls `copyMessage` to copy the reel to Channel 2, `deleteMessage` to remove it from Channel 1, and saves the file record to `data/reels_archive.json`.
-* **Archive Fallback:** If Channel 1 has no pending videos, the system selects an archived video prioritizing lowest `repostCount` to keep posting without repetition.
+* **Archive Fallback:** If Channel 1 has no pending videos, the system checks the archive. To prevent immediate and repetitive reposting of the same clip, recycling only activates once there are at least **10 archived videos** recorded in `data/reels_archive.json`. When active, it selects videos prioritizing the lowest `repostCount`.
 
 ---
 

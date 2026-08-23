@@ -170,11 +170,13 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "") {
 
 /**
  * Select a random reel from the archive, prioritizing reels that haven't been reposted recently.
+ * Requires a minimum pool of archived items (default 10) to avoid immediate recycling.
+ * @param {number} [minRequired]
  * @returns {Object|null}
  */
-export function getRandomArchiveItem() {
+export function getRandomArchiveItem(minRequired = 10) {
   const archive = getArchive();
-  if (!archive || archive.length === 0) {
+  if (!archive || archive.length < minRequired) {
     return null;
   }
 

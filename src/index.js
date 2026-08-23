@@ -4,7 +4,7 @@ import { runNanoJob } from "./jobs/nanoFacts.job.js";
 import { runCommentResponderJob } from "./jobs/commentResponder.job.js";
 import { runReelsPublisherJob } from "./jobs/reelsPublisher.job.js";
 import { startTelegramListener } from "./services/telegram.service.js";
-import { startServer } from "./server.js";
+// import { startServer } from "./server.js";
 
 console.log("=========================================");
 console.log("🤖 AI-Driven Facebook Automation Started");
@@ -19,8 +19,8 @@ process.on("uncaughtException", (err) => {
   console.error("[Process] Uncaught Exception:", err);
 });
 
-// Start Express Webhook Server (for Facebook Messenger AI Auto-Reply)
-startServer();
+// [DISABLED FOR NOW] Express Webhook Server (for Facebook Messenger AI Auto-Reply)
+// startServer();
 
 // Start Telegram Queue Listener in background
 startTelegramListener();

@@ -62,22 +62,25 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
 }
 
 /**
- * Fetch recent posts along with their comments for a Facebook Page.
+ * Fetch recent posts (including feed posts and video reels) along with their comments for a Facebook Page.
  * @param {Object} params
  * @param {string} params.pageId
  * @param {string} params.pageToken
  * @param {number} [params.limit]
- * @returns {Promise<Array>} Array of posts with comments
+ * @returns {Promise<Array>} Array of posts and videos with comments
  */
-export async function getRecentPostsWithComments({ pageId, pageToken, limit = 5 }) {
+export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10 }) {
   if (!pageId || !pageToken) {
     console.error("Missing pageId or pageToken for fetching comments.");
     return [];
   }
 
+  const postsMap = new Map();
+
+  // 1. Fetch Feed posts (Status, Photos, Shared Posts)
   try {
-    const url = `${BASE_URL}/${pageId}/feed`;
-    const res = await axios.get(url, {
+    const feedUrl = `${BASE_URL}/${pageId}/feed`;
+    const res = await axios.get(feedUrl, {
       params: {
         fields: "id,message,created_time,comments.limit(25){id,message,from,created_time,comments{id,from}}",
         limit,
@@ -85,11 +88,42 @@ export async function getRecentPostsWithComments({ pageId, pageToken, limit = 5 
       },
     });
 
-    return res.data?.data || [];
+    const feedPosts = res.data?.data || [];
+    for (const post of feedPosts) {
+      if (post.id) {
+        postsMap.set(post.id, post);
+      }
+    }
   } catch (err) {
-    console.error(`Error fetching posts for page ${pageId}:`, err.response?.data || err.message);
-    return [];
+    console.error(`Error fetching feed posts for page ${pageId}:`, err.response?.data || err.message);
   }
+
+  // 2. Fetch Video / Reels posts (Facebook Reels and uploaded videos)
+  try {
+    const videosUrl = `${BASE_URL}/${pageId}/videos`;
+    const res = await axios.get(videosUrl, {
+      params: {
+        fields: "id,description,title,created_time,comments.limit(25){id,message,from,created_time,comments{id,from}}",
+        limit,
+        access_token: pageToken,
+      },
+    });
+
+    const videoPosts = res.data?.data || [];
+    for (const video of videoPosts) {
+      if (video.id && !postsMap.has(video.id)) {
+        postsMap.set(video.id, {
+          ...video,
+          message: video.description || video.title || video.message || "",
+        });
+      }
+    }
+  } catch (err) {
+    // Some pages may not have videos permission or videos yet; log as debug info
+    console.warn(`Note: Could not fetch video reels for page ${pageId}:`, err.response?.data?.error?.message || err.message);
+  }
+
+  return Array.from(postsMap.values());
 }
 
 /**

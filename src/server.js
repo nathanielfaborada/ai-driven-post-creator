@@ -34,10 +34,10 @@ app.get("/", (req, res) => {
 });
 
 /**
- * GET /webhook
+ * GET /webhook (and /webhooks)
  * Verification endpoint for Meta Webhook setup (Hub Challenge Handshake).
  */
-app.get("/webhook", (req, res) => {
+app.get(["/webhook", "/webhooks"], (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
@@ -54,10 +54,10 @@ app.get("/webhook", (req, res) => {
 });
 
 /**
- * POST /webhook
+ * POST /webhook (and /webhooks)
  * Receives real-time events from Meta (Messages, Postbacks, etc.).
  */
-app.post("/webhook", (req, res) => {
+app.post(["/webhook", "/webhooks"], (req, res) => {
   const body = req.body;
 
   if (body.object !== "page") {

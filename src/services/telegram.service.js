@@ -102,7 +102,7 @@ export async function downloadVideoBuffer(fileId) {
     const downloadUrl = `https://api.telegram.org/file/bot${config.telegram.botToken}/${filePath}`;
     const downloadRes = await axios.get(downloadUrl, {
       responseType: "arraybuffer",
-      httpsAgent: ipv4Agent,
+      httpsAgent: httpsAgent,
       timeout: 60000,
     });
 

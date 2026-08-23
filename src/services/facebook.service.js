@@ -8,11 +8,12 @@ const BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
  * @param {Object} params
  * @param {string} params.caption
  * @param {string|null} [params.imageUrl]
+ * @param {Buffer|null} [params.imageBuffer]
  * @param {string} params.pageId
  * @param {string} params.pageToken
  * @returns {Promise<string|null>} Created Post ID
  */
-export async function postToFacebook({ caption, imageUrl, pageId, pageToken }) {
+export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, pageToken }) {
   if (!caption) {
     console.log("No caption generated, skipping post.");
     return null;
@@ -23,8 +24,19 @@ export async function postToFacebook({ caption, imageUrl, pageId, pageToken }) {
   }
 
   try {
-    if (imageUrl) {
-      // Post with image using Photos API
+    if (imageBuffer) {
+      // Post with raw image Buffer from Google Imagen
+      const formData = new FormData();
+      formData.append("source", new Blob([imageBuffer], { type: "image/jpeg" }), "image.jpg");
+      formData.append("message", caption);
+      formData.append("access_token", pageToken);
+
+      const url = `${BASE_URL}/${pageId}/photos`;
+      const res = await axios.post(url, formData);
+      console.log("Posted with Gemini/Imagen image! Post ID:", res.data.id);
+      return res.data.id;
+    } else if (imageUrl) {
+      // Post with image URL using Photos API
       const url = `${BASE_URL}/${pageId}/photos`;
       const res = await axios.post(url, {
         url: imageUrl,
@@ -107,3 +119,61 @@ export async function replyToComment({ commentId, message, pageToken }) {
     return null;
   }
 }
+
+/**
+ * Publish a video Reel to a Facebook Page using the 3-step Reels API.
+ * @param {Object} params
+ * @param {Buffer} params.videoBuffer - Binary buffer of the video file
+ * @param {string} [params.caption] - Caption/description of the reel
+ * @param {string} params.pageId - Facebook Page ID
+ * @param {string} params.pageToken - Facebook Page Access Token
+ * @returns {Promise<{ success: boolean, videoId: string|null, error?: any }>}
+ */
+export async function publishFacebookReel({ videoBuffer, caption = "", pageId, pageToken }) {
+  if (!videoBuffer || !pageId || !pageToken) {
+    console.error("[FB Reels] Missing required params (videoBuffer, pageId, or pageToken).");
+    return { success: false, videoId: null, error: "Missing required parameters" };
+  }
+
+  try {
+    console.log("[FB Reels] Phase 1: Initializing Reels upload session...");
+    const initRes = await axios.post(`${BASE_URL}/${pageId}/video_reels`, {
+      upload_phase: "start",
+      access_token: pageToken,
+    });
+
+    const { video_id, upload_url } = initRes.data;
+    if (!video_id || !upload_url) {
+      throw new Error(`Failed to initialize upload session: ${JSON.stringify(initRes.data)}`);
+    }
+
+    console.log(`[FB Reels] Session initialized. Video ID: ${video_id}. Phase 2: Uploading ${videoBuffer.length} bytes...`);
+    await axios.post(upload_url, videoBuffer, {
+      headers: {
+        Authorization: `OAuth ${pageToken}`,
+        offset: 0,
+        file_size: videoBuffer.length,
+        "Content-Type": "application/octet-stream",
+      },
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
+
+    console.log("[FB Reels] Phase 3: Finishing and publishing Reel...");
+    const finishRes = await axios.post(`${BASE_URL}/${pageId}/video_reels`, {
+      upload_phase: "finish",
+      video_id: video_id,
+      video_state: "PUBLISHED",
+      description: caption || "",
+      access_token: pageToken,
+    });
+
+    console.log(`[FB Reels] ✅ Successfully published Reel! Video ID: ${video_id}`);
+    return { success: true, videoId: video_id, data: finishRes.data };
+  } catch (err) {
+    const errorDetails = err.response?.data || err.message;
+    console.error("[FB Reels] ❌ Error publishing Facebook Reel:", errorDetails);
+    return { success: false, videoId: null, error: errorDetails };
+  }
+}
+

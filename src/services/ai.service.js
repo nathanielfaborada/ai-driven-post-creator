@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../config/env.js";
+import { stringToUnicodeBold, toUnicodeBold } from "../utils/formatters.js";
 
 const aiAstaplays = new GoogleGenAI({ apiKey: config.astaPlays.apiKey });
 const aiNanoFacts = new GoogleGenAI({ apiKey: config.nanoFacts.apiKey });
@@ -55,10 +56,16 @@ export async function generateCaptionAstaPlays() {
 
     const text = response.text.trim();
     const heroMatch = text.match(/HERO:\s*(.+)/i);
+    const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
     const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
 
     const heroName = heroMatch ? heroMatch[1].trim() : null;
-    const caption = captionMatch ? captionMatch[1].trim() : text;
+    const rawTitle = titleMatch ? titleMatch[1].trim() : null;
+    const rawBody = captionMatch ? captionMatch[1].trim() : text;
+
+    const boldTitle = rawTitle ? stringToUnicodeBold(rawTitle) : "";
+    const boldBody = toUnicodeBold(rawBody);
+    const caption = boldTitle ? `${boldTitle}\n\n${boldBody}` : boldBody;
 
     return { heroName, caption };
   } catch (err) {
@@ -68,61 +75,75 @@ export async function generateCaptionAstaPlays() {
 }
 
 /**
- * Generate Chemistry Facebook Post Caption for Nano Facts.
- * @returns {Promise<{ elementName: string|null, caption: string|null }>}
+ * Generate Science & Technology Facebook Post Caption for Nano Facts with Subscription CTA.
+ * @returns {Promise<{ topicName: string|null, elementName: string|null, caption: string|null }>}
  */
 export async function generateCaptionNanoFacts() {
   try {
     const response = await aiNanoFacts.models.generateContent({
       model: GEMINI_MODEL,
       contents: `
-      Generate a short, SEO-optimized, text-only Facebook post about a random chemical element using this EXACT structure.
+      Generate a short, SEO-optimized Facebook post about a fascinating topic in SCIENCE & TECHNOLOGY.
+      Pick randomly from diverse fields such as:
+      - Astronomy, Astrophysics, Deep Space, Exoplanets, Black Holes
+      - Quantum Physics, Particle Physics, Lasers, Optics, Relativity
+      - Biology, Genetics, Neuroscience, Evolution, Microbiology
+      - Nanotechnology, Materials Science, Superconductors, Graphene
+      - Artificial Intelligence, Robotics, Quantum Computing, Future Tech
+      - Earth Sciences, Oceanography, Geology, Planetary Science
+      - Chemistry, Amazing Elements, Breakthrough Molecules
 
-      ELEMENT: {element name only}
+      Use this EXACT structure:
+
+      TOPIC: {topic name only}
 
       TITLE:
-      {Element Name} – {Short catchy subtitle, 4–8 words}
+      {Topic Name} – {Short catchy subtitle, 4–8 words}
 
       CAPTION:
 
-      Did you know {one surprising fact or engaging question about the element}? {1 relevant emoji}
+      Did you know {one mind-blowing fact or engaging hook question about the topic}? {1 relevant emoji}
 
-      {Write ONLY 2 short sentences (under 200 characters total) explaining what the element is, why it's important, or where it's used. Make it exciting, educational, and easy for anyone to understand. Include 1–2 relevant emojis. Avoid long paragraphs.}
+      {Write ONLY 2 short, fascinating sentences explaining how it works, why it matters, or its futuristic impact. Make it educational, exciting, and accessible to anyone. Use 1–2 emojis.}
 
-      ⚛️ Learn Science in Seconds
-      New Periodic Table facts every week!
+      🔓 Unlock The Nano Facts Science Library 🔬📚
+      Love learning? Help us unlock exclusive Science E-Books, Physics & Chemistry Study Guides, Biology materials, and downloadable PDF resources!
 
-      👍 Like, Share & Follow Nano Facts for more science content.
+      🌟 Support our page & become a Subscriber:
+      👉 https://www.facebook.com/nanoscie/subscribe/
 
-      {10–15 comma-separated SEO keywords including the element name, chemical symbol, element category, periodic table, chemistry, science, STEM, science facts, education, and common uses}
+      👇 Comment below: What science topic should be included in our next exclusive study guide?
 
-      Exactly 5 hashtags:
-      #Chemistry #Science #PeriodicTable #{ElementName} #ScienceFacts
+      {10–15 comma-separated SEO keywords directly related to this topic, field of science, technology, research, discovery, education, STEM}
+
+      Exactly 5 hashtags matching the topic:
+      #Science #Technology #NanoFacts #STEM #{TopicOrField}
 
       Rules:
-      - Return plain text only.
-      - Do NOT include URLs or external links.
-      - Do NOT include donation requests or PayPal links.
-      - Keep the caption under 350 characters for better Facebook reach.
-      - Make the first sentence a strong hook.
-      - Use simple English suitable for all ages.
-      - Facts must be scientifically accurate.
-      - Use only 2–3 emojis total.
+      - The first sentence must be a strong hook starting with "Did you know".
+      - Facts must be scientifically accurate and up-to-date.
+      - Keep sentences punchy and engaging.
       - Follow the exact formatting and line breaks shown above.
       `,
     });
 
     const text = response.text.trim();
-    const elementMatch = text.match(/ELEMENT:\s*(.+)/i);
+    const topicMatch = text.match(/(?:TOPIC|ELEMENT):\s*(.+)/i);
+    const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
     const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
 
-    const elementName = elementMatch ? elementMatch[1].trim() : null;
-    const caption = captionMatch ? captionMatch[1].trim() : text;
+    const topicName = topicMatch ? topicMatch[1].trim() : null;
+    const rawTitle = titleMatch ? titleMatch[1].trim() : null;
+    const rawBody = captionMatch ? captionMatch[1].trim() : text;
 
-    return { elementName, caption };
+    const boldTitle = rawTitle ? stringToUnicodeBold(rawTitle) : "";
+    const boldBody = toUnicodeBold(rawBody);
+    const caption = boldTitle ? `${boldTitle}\n\n${boldBody}` : boldBody;
+
+    return { topicName, elementName: topicName, caption };
   } catch (err) {
     console.error("Error generating Nano Facts caption:", err.message);
-    return { elementName: null, caption: null };
+    return { topicName: null, elementName: null, caption: null };
   }
 }
 
@@ -165,3 +186,5 @@ export async function generateCommentReply({ userComment, postTopic = "our Faceb
     return null;
   }
 }
+
+

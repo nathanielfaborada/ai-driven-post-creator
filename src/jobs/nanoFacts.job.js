@@ -1,6 +1,5 @@
 import { generateCaptionNanoFacts } from "../services/ai.service.js";
 import { postToFacebook } from "../services/facebook.service.js";
-import { toUnicodeBold } from "../utils/formatters.js";
 import { config } from "../config/env.js";
 
 /**
@@ -8,20 +7,19 @@ import { config } from "../config/env.js";
  */
 export async function runNanoJob() {
   console.log("\n[Nano Facts] Generating caption...");
-  const { elementName, caption } = await generateCaptionNanoFacts();
+  const { topicName, elementName, caption } = await generateCaptionNanoFacts();
 
   if (!caption) {
     console.log("[Nano Facts] No caption generated, aborting this run.");
     return;
   }
 
-  console.log("[Nano Facts] Element:", elementName);
+  console.log("[Nano Facts] Topic:", topicName || elementName);
   console.log("[Nano Facts] Caption:\n", caption);
 
-  console.log("[Nano Facts] Posting to Facebook...");
-  const formattedCaption = toUnicodeBold(caption);
+  console.log("[Nano Facts] Posting to Facebook (Text Only)...");
   await postToFacebook({
-    caption: formattedCaption,
+    caption,
     imageUrl: null,
     pageId: config.nanoFacts.pageId,
     pageToken: config.nanoFacts.pageToken,

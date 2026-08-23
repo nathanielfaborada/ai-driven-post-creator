@@ -11,4 +11,10 @@ export const config = {
     pageId: process.env.FB_PAGE_ID_NANO_FACTS,
     pageToken: process.env.FB_PAGE_ACCESS_TOKEN_NANO_FACTS,
   },
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN,
+    queueChannelId: process.env.TELEGRAM_CHANNEL_QUEUE_ID,
+    archiveChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_ID,
+  },
 };
+

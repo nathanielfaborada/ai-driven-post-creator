@@ -136,11 +136,22 @@ flowchart TD
 
 ### 3. Comment Auto-Responder
 
-* Checks the 5 most recent page posts for new comments every 3 hours.
+* Checks the 10 most recent page posts and video reels for new comments every 3 hours.
+* Runs concurrently across managed pages using `Promise.allSettled`.
 * Filters out comments older than 24 hours and comments already answered by the page.
 * Generates contextual, friendly responses using Gemini matching the page persona.
 * Introduces a randomized delay (45–90 seconds) between replies to maintain natural interaction pacing.
 * Saves processed comment IDs to `data/replied_comments.json` to prevent duplicate responses.
+
+---
+
+### 4. Facebook Messenger AI Chat Auto-Responder (Real-Time Webhooks)
+
+* Listens for real-time private messages via Express Webhook endpoints (`GET /webhook` & `POST /webhook`).
+* Automatically matches incoming recipient Page IDs (`Asta Plays` or `Nano Facts`).
+* Displays a natural **typing indicator** (`typing_on`) while Gemini processes the response.
+* Replies directly via the **Messenger Send API** (`POST /me/messages`) with niche-specific AI personas.
+* Implements in-memory message deduplication to avoid double-replies from Meta webhook retries.
 
 ---
 
@@ -167,7 +178,7 @@ The posting timetable is structured so Reels and Text Posts alternate every hour
 | **9:00 PM** | Publish Reel | — | — |
 | **10:00 PM** | — | Publish Post | Publish Post |
 
-*Note: The AI Comment Responder runs in parallel every 3 hours (`0 */3 * * *`).*
+*Note: The AI Comment Responder runs in parallel every 3 hours (`0 */3 * * *`), and the Messenger Webhook listener runs continuously in the background.*
 
 ---
 
@@ -187,12 +198,14 @@ The posting timetable is structured so Reels and Text Posts alternate every hour
 │   │   ├── nanoFacts.job.js      # Nano Facts content workflow
 │   │   └── reelsPublisher.job.js # Telegram Reels queue worker
 │   ├── services/
-│   │   ├── ai.service.js         # Google Gemini text generation
-│   │   ├── facebook.service.js   # Meta Graph API integration
+│   │   ├── ai.service.js         # Google Gemini text & chat generation
+│   │   ├── facebook.service.js   # Meta Graph API feed & video integration
+│   │   ├── messenger.service.js  # Messenger Send API & typing indicators
 │   │   └── telegram.service.js   # Telegram Bot listener, downloader & archiver
 │   ├── utils/
 │   │   ├── formatters.js         # Unicode bold text converter
 │   │   └── storage.js            # JSON storage helper functions
+│   ├── server.js                 # Express Webhook server for Messenger
 │   └── index.js                  # Main scheduler and service bootstrapper
 ├── .env.example                  # Environment variables template
 ├── package.json                  # Dependencies and scripts

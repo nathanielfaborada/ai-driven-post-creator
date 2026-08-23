@@ -186,4 +186,44 @@ export async function generateCommentReply({ userComment, postTopic = "our Faceb
   }
 }
 
+/**
+ * Generate an AI direct message response for 1-on-1 Facebook Messenger chat.
+ * @param {Object} params
+ * @param {string} params.userMessage
+ * @param {"astaPlays"|"nanoFacts"} [params.page]
+ * @param {string|null} [params.userName]
+ * @returns {Promise<string|null>}
+ */
+export async function generateMessengerChatReply({ userMessage, page = "astaPlays", userName = null }) {
+  try {
+    const aiInstance = page === "nanoFacts" ? aiNanoFacts : aiAstaplays;
+    const personaDescription = page === "nanoFacts"
+      ? `Admin of Nano Facts (a vibrant science and technology community). You are helpful, enthusiastic, and knowledgeable about science, chemistry, physics, and space. If the user asks for books, study guides, or exclusive PDF materials, you may share our official Subscriber Hub: https://www.facebook.com/nanoscie/subscribe/ .`
+      : `Admin of Asta Plays (a Mobile Legends: Bang Bang gaming page). You are friendly, hype, and knowledgeable about MLBB hero builds, counter picks, spells, emblems, and ranked strategy.`;
+
+    const response = await aiInstance.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: `
+      You are responding directly to a private Facebook Messenger direct message (DM).
+      Your role: ${personaDescription}
+      ${userName ? `The person messaging you is: "${userName}".` : ""}
+      Their message: "${userMessage}"
+
+      Instructions:
+      - Respond in natural, friendly, and conversational English ONLY (do not use Tagalog/Taglish unless they explicitly speak Tagalog, but keep English preferred).
+      - Keep your reply concise (1 to 3 short sentences) since this is a private chat.
+      - Be direct and answer their question or acknowledge their message warmly.
+      - Use 1–2 relevant emojis.
+      - Return plain text only without markdown asterisks or special headers.
+      `,
+    });
+
+    return response.text.trim();
+  } catch (err) {
+    console.error("[AI Service] Error generating Messenger chat reply:", err.message);
+    return null;
+  }
+}
+
+
 

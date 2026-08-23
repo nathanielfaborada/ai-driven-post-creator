@@ -172,7 +172,7 @@ async function handleMessagingEvent(event) {
  * Start the Express Webhook server.
  */
 export function startServer() {
-  const port = Number(process.env.PORT) || config.server.port || 3000;
+  const port = Number(process.env.PORT) || config.server.port || 8080;
   app.listen(port, "0.0.0.0", () => {
     console.log(`🌐 Webhook Server is running on port ${port} on 0.0.0.0 (Ready for Meta Webhook requests)`);
   });

@@ -17,7 +17,7 @@ export const config = {
     archiveChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_ID,
   },
   server: {
-    port: process.env.PORT || 3000,
+    port: Number(process.env.PORT) || 8080,
   },
   facebook: {
     verifyToken: process.env.FB_VERIFY_TOKEN || "my_facebook_webhook_secret_token",

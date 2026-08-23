@@ -42,13 +42,13 @@ app.get("/webhook", (req, res) => {
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
-  const expectedToken = config.facebook.verifyToken;
+  const expectedToken = String(config.facebook?.verifyToken || process.env.FB_VERIFY_TOKEN || "").trim();
 
-  if (mode === "subscribe" && token === expectedToken) {
+  if (mode === "subscribe" && String(token || "").trim() === expectedToken) {
     console.log("[Webhook] ✅ Successfully verified webhook handshake with Meta!");
     return res.status(200).send(challenge);
   } else {
-    console.warn("[Webhook] ❌ Webhook verification failed. Token mismatch or invalid mode.");
+    console.warn(`[Webhook] ❌ Webhook verification failed. Expected "${expectedToken}", received "${token}".`);
     return res.sendStatus(403);
   }
 });
@@ -172,8 +172,8 @@ async function handleMessagingEvent(event) {
  * Start the Express Webhook server.
  */
 export function startServer() {
-  const port = config.server.port;
-  app.listen(port, () => {
-    console.log(`🌐 Webhook Server is running on port ${port} (Ready for Meta Webhook requests)`);
+  const port = Number(process.env.PORT) || config.server.port || 3000;
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`🌐 Webhook Server is running on port ${port} on 0.0.0.0 (Ready for Meta Webhook requests)`);
   });
 }

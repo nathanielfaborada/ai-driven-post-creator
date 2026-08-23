@@ -32,6 +32,11 @@ runNanoJob().catch((err) => console.error("[Startup] Nano Facts job error:", err
 // Run comment responder once immediately on startup safely
 runCommentResponderJob().catch((err) => console.error("[Startup] Comment responder error:", err.message));
 
+// Run Reels Publisher once on startup (after 5s to let Telegram listener sync queue)
+setTimeout(() => {
+  runReelsPublisherJob().catch((err) => console.error("[Startup] Reels publisher error:", err.message));
+}, 5000);
+
 // Schedule Asta Plays at 1:00 AM, 4:00 AM, 7:00 AM, 10:00 AM, 1:00 PM, 4:00 PM, 7:00 PM, 10:00 PM
 schedule.scheduleJob("0 1,4,7,10,13,16,19,22 * * *", () => {
   console.log("\n[Scheduler] Running Asta Plays job at:", new Date().toLocaleString());

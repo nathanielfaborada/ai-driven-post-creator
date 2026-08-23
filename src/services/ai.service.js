@@ -34,10 +34,9 @@ export async function generateCaptionAstaPlays() {
 
       👍 Like, Share & Follow for more MLBB guides and hero spotlights.
 
-      KEYWORDS:
+      
       {10–15 comma-separated SEO keywords including hero name, role, Mobile Legends, MLBB, gameplay, build guide, hero guide, ranked, esports, MOBA, strategy}
 
-      HASHTAGS:
       Exactly 5 hashtags:
       #MobileLegends #MLBB #MLBBPH #{HeroName} #{HeroRole}
 

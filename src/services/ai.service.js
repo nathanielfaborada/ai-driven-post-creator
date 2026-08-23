@@ -2,8 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { config } from "../config/env.js";
 import { stringToUnicodeBold, toUnicodeBold } from "../utils/formatters.js";
 
-const aiAstaplays = new GoogleGenAI({ apiKey: config.astaPlays.apiKey });
-const aiNanoFacts = new GoogleGenAI({ apiKey: config.nanoFacts.apiKey });
+const aiAstaplays = new GoogleGenAI({ apiKey: config.astaPlays?.apiKey || "" });
+const aiNanoFacts = new GoogleGenAI({ apiKey: config.nanoFacts?.apiKey || "" });
 
 const GEMINI_MODEL = "gemini-3.6-flash";
 

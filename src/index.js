@@ -10,18 +10,27 @@ console.log("=========================================");
 console.log("🤖 AI-Driven Facebook Automation Started");
 console.log("=========================================");
 
+// Handle global unhandled errors to keep server alive 24/7
+process.on("unhandledRejection", (reason) => {
+  console.error("[Process] Unhandled Rejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[Process] Uncaught Exception:", err);
+});
+
 // Start Express Webhook Server (for Facebook Messenger AI Auto-Reply)
 startServer();
 
 // Start Telegram Queue Listener in background
 startTelegramListener();
 
-// Run posting jobs once immediately on startup
-runAstaJob();
-runNanoJob();
+// Run posting jobs once immediately on startup safely
+runAstaJob().catch((err) => console.error("[Startup] Asta Plays job error:", err.message));
+runNanoJob().catch((err) => console.error("[Startup] Nano Facts job error:", err.message));
 
-// Run comment responder once immediately on startup to process initial batch
-runCommentResponderJob();
+// Run comment responder once immediately on startup safely
+runCommentResponderJob().catch((err) => console.error("[Startup] Comment responder error:", err.message));
 
 // Schedule Asta Plays at 1:00 AM, 4:00 AM, 7:00 AM, 10:00 AM, 1:00 PM, 4:00 PM, 7:00 PM, 10:00 PM
 schedule.scheduleJob("0 1,4,7,10,13,16,19,22 * * *", () => {

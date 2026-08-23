@@ -8,12 +8,11 @@ const DATA_DIR = path.resolve("data");
 const QUEUE_FILE = path.join(DATA_DIR, "reels_queue.json");
 const ARCHIVE_FILE = path.join(DATA_DIR, "reels_archive.json");
 
-// Force IPv4 to prevent Windows Node.js ETIMEDOUT issues with Telegram
-const ipv4Agent = new https.Agent({ family: 4, keepAlive: true });
+const httpsAgent = new https.Agent({ keepAlive: true });
 
 const tgClient = axios.create({
   baseURL: `https://api.telegram.org/bot${config.telegram.botToken}`,
-  httpsAgent: ipv4Agent,
+  httpsAgent: httpsAgent,
   timeout: 30000,
 });
 

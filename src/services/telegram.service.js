@@ -256,8 +256,10 @@ export async function pollTelegramUpdates() {
       }
     }
   } catch (err) {
-    // If polling timeout, it's normal in long polling; only log actual errors
-    if (err.code !== "ECONNABORTED" && err.response?.status !== 408) {
+    if (err.response?.status === 409) {
+      console.log("[Telegram Service] ℹ️ Deployment handoff/restart detected (409 Conflict). Waiting 5s before reconnecting...");
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    } else if (err.code !== "ECONNABORTED" && err.response?.status !== 408) {
       console.error("[Telegram Service] Polling error:", err.response?.data || err.message);
     }
   }

@@ -147,11 +147,14 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
 
   try {
     // 1. Determine destination channel based on category
-    let destChannelId = config.telegram.archiveChannelId;
-    if (category === "Biology" && config.telegram.archiveBiologyChannelId) {
+    let destChannelId = null;
+    if (category === "Biology") {
       destChannelId = config.telegram.archiveBiologyChannelId;
-    } else if (category === "Periodic Table" && config.telegram.archivePeriodicChannelId) {
+    } else if (category === "Periodic Table") {
       destChannelId = config.telegram.archivePeriodicChannelId;
+    } else {
+      // Fallback to Biology or Periodic archive if General
+      destChannelId = config.telegram.archiveBiologyChannelId || config.telegram.archivePeriodicChannelId;
     }
 
     // 2. Copy message to respective Category Archive Channel

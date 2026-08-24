@@ -14,9 +14,8 @@ export const config = {
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
     queueChannelId: process.env.TELEGRAM_CHANNEL_QUEUE_ID,
-    archiveChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_ID,
-    archiveBiologyChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_BIOLOGY_ID || process.env.TELEGRAM_CHANNEL_ARCHIVE_ID,
-    archivePeriodicChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_PERIODIC_ID || process.env.TELEGRAM_CHANNEL_ARCHIVE_ID,
+    archiveBiologyChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_BIOLOGY_ID,
+    archivePeriodicChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_PERIODIC_ID,
   },
   server: {
     port: Number(process.env.PORT) || 8080,

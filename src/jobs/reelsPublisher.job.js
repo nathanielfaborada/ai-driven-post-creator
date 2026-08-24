@@ -5,6 +5,7 @@ import {
   archiveAndCleanupReel,
   getRandomArchiveItem,
   markArchiveItemReposted,
+  logArchiveStats,
 } from "../services/telegram.service.js";
 import { publishFacebookReel } from "../services/facebook.service.js";
 import { generateReelCaptionNanoFacts } from "../services/ai.service.js";
@@ -17,6 +18,8 @@ export async function runReelsPublisherJob() {
   console.log("\n=========================================");
   console.log("[Reels Publisher] 🎬 Starting Reels Posting Workflow...");
   console.log("=========================================");
+
+  logArchiveStats();
 
   const queue = getQueue();
 
@@ -34,9 +37,9 @@ export async function runReelsPublisherJob() {
     }
 
     console.log(`[Reels Publisher] 🧠 Generating AI SEO Reel Caption (Input Context: "${nextItem.caption || "None"}")`);
-    const { topicName, caption: generatedCaption } = await generateReelCaptionNanoFacts(nextItem.caption || "");
+    const { topicName, caption: generatedCaption, category } = await generateReelCaptionNanoFacts(nextItem.caption || "");
     const finalCaption = generatedCaption || toUnicodeBold(nextItem.caption || "");
-    console.log(`[Reels Publisher] Topic:`, topicName);
+    console.log(`[Reels Publisher] Category: [${category}] | Topic: ${topicName}`);
     console.log(`[Reels Publisher] Final Caption:\n${finalCaption}\n`);
 
     console.log(`[Reels Publisher] 🚀 Publishing Reel to Facebook (Page ID: ${config.nanoFacts.pageId})...`);
@@ -49,13 +52,13 @@ export async function runReelsPublisherJob() {
 
     if (fbRes.success) {
       console.log(`[Reels Publisher] ✅ Published successfully! Facebook Video ID: ${fbRes.videoId}`);
-      console.log("[Reels Publisher] 📦 Archiving to Channel 2 & cleaning up Channel 1...");
-      await archiveAndCleanupReel(nextItem, fbRes.videoId);
+      console.log(`[Reels Publisher] 📦 Archiving to [${category}] Archive Channel & cleaning up Channel 1...`);
+      await archiveAndCleanupReel(nextItem, fbRes.videoId, category);
     } else {
       console.error("[Reels Publisher] ❌ Facebook publishing failed. Message kept in queue for retry.", fbRes.error);
     }
   } else {
-    // 2. Fallback: Queue is empty -> Pick from Archive (Requires at least 10 videos)
+    // 2. Fallback: Queue is empty -> Pick from Archive (Requires at least 10 videos per category)
     const MIN_ARCHIVE_COUNT = 10;
     const archiveItem = getRandomArchiveItem(MIN_ARCHIVE_COUNT);
 

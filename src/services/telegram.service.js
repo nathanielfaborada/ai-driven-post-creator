@@ -118,20 +118,52 @@ export async function downloadVideoBuffer(fileId) {
  * @param {Object} queueItem
  * @param {string} [fbVideoId]
  */
-export async function archiveAndCleanupReel(queueItem, fbVideoId = "") {
+/**
+ * Log live statistics of archived evergreen reels by category.
+ */
+export function logArchiveStats() {
+  const archive = getArchive();
+  const bioCount = archive.filter((i) => i.category === "Biology").length;
+  const chemCount = archive.filter((i) => i.category === "Periodic Table").length;
+  const otherCount = archive.filter((i) => i.category !== "Biology" && i.category !== "Periodic Table").length;
+
+  console.log(`\n=========================================`);
+  console.log(`📊 [Nano Facts Reels Archive Stats]`);
+  console.log(`  🧬 Biology (Channel 2A): ${bioCount} video(s)`);
+  console.log(`  ⚛️ Periodic Table (Channel 2B): ${chemCount} video(s)`);
+  if (otherCount > 0) console.log(`  🔬 Other Science: ${otherCount} video(s)`);
+  console.log(`  📦 Total Evergreen Library: ${archive.length} video(s)`);
+  console.log(`=========================================\n`);
+}
+
+/**
+ * Archive a published reel from Channel 1 to its respective Category Archive Channel and delete from Channel 1.
+ * @param {Object} queueItem
+ * @param {string} [fbVideoId]
+ * @param {"Biology"|"Periodic Table"|"General"} [category]
+ */
+export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category = "General") {
   const { messageId, fileId, caption } = queueItem;
 
   try {
-    // 1. Copy message to Channel 2 (Posted FB Reels Archive)
-    if (messageId && config.telegram.archiveChannelId && config.telegram.queueChannelId) {
-      console.log(`[Telegram Service] Copying message ${messageId} to Archive Channel...`);
+    // 1. Determine destination channel based on category
+    let destChannelId = config.telegram.archiveChannelId;
+    if (category === "Biology" && config.telegram.archiveBiologyChannelId) {
+      destChannelId = config.telegram.archiveBiologyChannelId;
+    } else if (category === "Periodic Table" && config.telegram.archivePeriodicChannelId) {
+      destChannelId = config.telegram.archivePeriodicChannelId;
+    }
+
+    // 2. Copy message to respective Category Archive Channel
+    if (messageId && destChannelId && config.telegram.queueChannelId) {
+      console.log(`[Telegram Service] Copying message ${messageId} to [${category}] Archive Channel (${destChannelId})...`);
       await tgClient.post("/copyMessage", {
-        chat_id: config.telegram.archiveChannelId,
+        chat_id: destChannelId,
         from_chat_id: config.telegram.queueChannelId,
         message_id: messageId,
       });
 
-      // 2. Delete message from Channel 1 (FB Reels to Post)
+      // 3. Delete message from Channel 1 (FB Reels to Post)
       console.log(`[Telegram Service] Deleting message ${messageId} from Queue Channel...`);
       await tgClient.post("/deleteMessage", {
         chat_id: config.telegram.queueChannelId,
@@ -139,21 +171,23 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "") {
       });
     }
 
-    // 3. Remove from Queue file
+    // 4. Remove from Queue file
     const currentQueue = getQueue();
     const updatedQueue = currentQueue.filter((q) => q.messageId !== messageId);
     saveQueue(updatedQueue);
 
-    // 4. Add to Archive file
+    // 5. Add to Archive file with category
     const currentArchive = getArchive();
     const existingIndex = currentArchive.findIndex((a) => a.fileId === fileId);
 
     if (existingIndex >= 0) {
       currentArchive[existingIndex].lastRepostedAt = new Date().toISOString();
       currentArchive[existingIndex].repostCount = (currentArchive[existingIndex].repostCount || 0) + 1;
+      currentArchive[existingIndex].category = category;
     } else {
       currentArchive.push({
         fileId,
+        category,
         caption: caption || "",
         originalPostedAt: new Date().toISOString(),
         fbVideoId: fbVideoId || null,
@@ -162,26 +196,53 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "") {
       });
     }
     saveArchive(currentArchive);
-    console.log("[Telegram Service] ✅ Successfully archived and cleaned up reel.");
+    console.log(`[Telegram Service] ✅ Successfully archived reel under category: "${category}".`);
+    logArchiveStats();
   } catch (err) {
     console.error("[Telegram Service] ⚠️ Error during archive/cleanup:", err.response?.data || err.message);
   }
 }
 
 /**
- * Select a random reel from the archive, prioritizing reels that haven't been reposted recently.
- * Requires a minimum pool of archived items (default 10) to avoid immediate recycling.
- * @param {number} [minRequired]
+ * Select a random reel from eligible archive categories that meet the minimum threshold (default 10).
+ * Prioritizes reels with the lowest repost count.
+ * @param {number} [minThresholdPerCategory]
  * @returns {Object|null}
  */
-export function getRandomArchiveItem(minRequired = 10) {
+export function getRandomArchiveItem(minThresholdPerCategory = 10) {
   const archive = getArchive();
-  if (!archive || archive.length < minRequired) {
+  if (!archive || archive.length === 0) {
     return null;
   }
 
-  // Sort by repostCount (ascending) so least reposted are favored, then shuffle among top candidates
-  const sorted = [...archive].sort((a, b) => (a.repostCount || 0) - (b.repostCount || 0));
+  // Group items by category
+  const categories = {};
+  for (const item of archive) {
+    const cat = item.category || "General";
+    if (!categories[cat]) categories[cat] = [];
+    categories[cat].push(item);
+  }
+
+  // Filter categories that meet the threshold
+  const eligibleItems = [];
+  const statusLog = [];
+
+  for (const [catName, items] of Object.entries(categories)) {
+    if (items.length >= minThresholdPerCategory) {
+      eligibleItems.push(...items);
+      statusLog.push(`${catName}: ${items.length} items (✅ Qualified >= ${minThresholdPerCategory})`);
+    } else {
+      statusLog.push(`${catName}: ${items.length}/${minThresholdPerCategory} items (⏳ Need ${minThresholdPerCategory - items.length} more)`);
+    }
+  }
+
+  if (eligibleItems.length === 0) {
+    console.log(`[Telegram Service] ⏳ Archive Threshold Status:\n  - ${statusLog.join("\n  - ")}\n  No category has reached the minimum ${minThresholdPerCategory} videos yet.`);
+    return null;
+  }
+
+  // Sort eligible items by repostCount (ascending) so least reposted are favored, then shuffle among top candidates
+  const sorted = [...eligibleItems].sort((a, b) => (a.repostCount || 0) - (b.repostCount || 0));
   const minCount = sorted[0].repostCount || 0;
   const candidatePool = sorted.filter((item) => (item.repostCount || 0) <= minCount + 1);
 
@@ -207,7 +268,7 @@ let lastUpdateId = 0;
 let isPolling = false;
 
 /**
- * Process incoming Telegram channel updates and queue any uploaded video reels.
+ * Process incoming Telegram updates across Channel 1 (Queue), Channel 2A (Biology), and Channel 2B (Periodic Table).
  */
 export async function pollTelegramUpdates() {
   try {
@@ -224,35 +285,76 @@ export async function pollTelegramUpdates() {
       const post = update.channel_post || update.message;
       if (!post) continue;
 
-      // Check if message belongs to Queue Channel
       const chatId = String(post.chat?.id);
       const targetQueueId = String(config.telegram.queueChannelId);
+      const targetBioId = config.telegram.archiveBiologyChannelId ? String(config.telegram.archiveBiologyChannelId) : null;
+      const targetChemId = config.telegram.archivePeriodicChannelId ? String(config.telegram.archivePeriodicChannelId) : null;
 
+      const video = post.video || post.animation || (post.document?.mime_type?.startsWith("video/") ? post.document : null);
+      if (!video) continue;
+
+      const messageId = post.message_id;
+      const fileId = video.file_id;
+      const caption = post.caption || "";
+
+      // 1. Channel 1: Queue Channel (New uploads to be posted FIFO)
       if (chatId === targetQueueId) {
-        // Extract video or animation / document video
-        const video = post.video || post.animation || (post.document?.mime_type?.startsWith("video/") ? post.document : null);
-        if (video) {
-          const messageId = post.message_id;
-          const fileId = video.file_id;
-          const caption = post.caption || "";
+        const queue = getQueue();
+        const alreadyExists = queue.some((item) => item.messageId === messageId || item.fileId === fileId);
 
-          const queue = getQueue();
-          const alreadyExists = queue.some((item) => item.messageId === messageId);
+        if (!alreadyExists) {
+          console.log(`\n[Telegram Service] 📥 New Reel detected in Queue Channel (Msg ID: ${messageId})!`);
+          queue.push({
+            messageId,
+            fileId,
+            caption,
+            date: post.date,
+            fileSize: video.file_size,
+            duration: video.duration,
+            addedAt: new Date().toISOString(),
+          });
+          saveQueue(queue);
+          console.log(`[Telegram Service] Total pending reels in queue: ${queue.length}`);
+        }
+      }
 
-          if (!alreadyExists) {
-            console.log(`\n[Telegram Service] 📥 New Reel detected in Queue Channel (Msg ID: ${messageId})!`);
-            queue.push({
-              messageId,
-              fileId,
-              caption,
-              date: post.date,
-              fileSize: video.file_size,
-              duration: video.duration,
-              addedAt: new Date().toISOString(),
-            });
-            saveQueue(queue);
-            console.log(`[Telegram Service] Total pending reels in queue: ${queue.length}`);
-          }
+      // 2. Channel 2A: Direct upload / seeding to Biology Archive
+      else if (targetBioId && chatId === targetBioId) {
+        const archive = getArchive();
+        const alreadyExists = archive.some((item) => item.fileId === fileId);
+        if (!alreadyExists) {
+          console.log(`\n[Telegram Service] 🧬 Direct Biology Reel seeded into Archive (File ID: ${fileId.slice(-8)})!`);
+          archive.push({
+            fileId,
+            category: "Biology",
+            caption,
+            originalPostedAt: new Date().toISOString(),
+            fbVideoId: null,
+            repostCount: 0,
+            lastRepostedAt: null,
+          });
+          saveArchive(archive);
+          logArchiveStats();
+        }
+      }
+
+      // 3. Channel 2B: Direct upload / seeding to Periodic Table Archive
+      else if (targetChemId && chatId === targetChemId) {
+        const archive = getArchive();
+        const alreadyExists = archive.some((item) => item.fileId === fileId);
+        if (!alreadyExists) {
+          console.log(`\n[Telegram Service] ⚛️ Direct Periodic Table Reel seeded into Archive (File ID: ${fileId.slice(-8)})!`);
+          archive.push({
+            fileId,
+            category: "Periodic Table",
+            caption,
+            originalPostedAt: new Date().toISOString(),
+            fbVideoId: null,
+            repostCount: 0,
+            lastRepostedAt: null,
+          });
+          saveArchive(archive);
+          logArchiveStats();
         }
       }
     }

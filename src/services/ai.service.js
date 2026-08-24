@@ -147,9 +147,60 @@ export async function generateCaptionNanoFacts() {
 }
 
 /**
+ * Classify a science topic or caption into "Biology", "Periodic Table", or "General".
+ * @param {string} text - Topic or text to classify
+ * @returns {Promise<"Biology"|"Periodic Table"|"General">}
+ */
+export async function classifyReelCategory(text = "") {
+  if (!text || !text.trim()) {
+    return "General";
+  }
+
+  const lower = text.toLowerCase();
+  
+  // Fast keyword matching
+  const bioKeywords = [
+    "cell", "dna", "gene", "biology", "organ", "human body", "bacteria", "virus", 
+    "evolution", "brain", "neuron", "mitochondria", "photosynthesis", "species", 
+    "animal", "plant", "heart", "blood", "immune", "ecosystem", "protein", "enzyme"
+  ];
+  const chemKeywords = [
+    "periodic table", "element", "chemistry", "atom", "molecule", "chemical", 
+    "reaction", "proton", "electron", "neutron", "acid", "metal", "gas", "compound", 
+    "oxygen", "hydrogen", "carbon", "gold", "iron", "uranium", "helium", "nitrogen"
+  ];
+
+  const hasBio = bioKeywords.some((k) => lower.includes(k));
+  const hasChem = chemKeywords.some((k) => lower.includes(k));
+
+  if (hasBio && !hasChem) return "Biology";
+  if (hasChem && !hasBio) return "Periodic Table";
+
+  // AI fallback classification if ambiguous
+  try {
+    const res = await aiNanoFacts.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: `
+      Classify the following science topic into EXACTLY ONE of these categories: "Biology", "Periodic Table", or "General".
+      Topic: "${text}"
+
+      Respond with ONLY the category name.
+      `,
+    });
+
+    const category = res.text.trim();
+    if (category.includes("Biology")) return "Biology";
+    if (category.includes("Periodic")) return "Periodic Table";
+    return "General";
+  } catch {
+    return hasBio ? "Biology" : hasChem ? "Periodic Table" : "General";
+  }
+}
+
+/**
  * Generate an AI-powered SEO & engagement caption for Facebook Reels based on the incoming Telegram caption/topic.
  * @param {string} [initialTopic] - Topic or raw caption provided via Telegram
- * @returns {Promise<{ topicName: string|null, caption: string|null }>}
+ * @returns {Promise<{ topicName: string|null, caption: string|null, category: "Biology"|"Periodic Table"|"General" }>}
  */
 export async function generateReelCaptionNanoFacts(initialTopic = "") {
   try {
@@ -209,12 +260,16 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
     const boldBody = toUnicodeBold(rawBody);
     const caption = boldTitle ? `${boldTitle}\n\n${boldBody}` : boldBody;
 
-    return { topicName, caption };
+    const category = await classifyReelCategory(topicName || initialTopic || text);
+
+    return { topicName, caption, category };
   } catch (err) {
     console.error("Error generating Nano Facts Reel caption:", err.message);
+    const fallbackCategory = await classifyReelCategory(initialTopic || "");
     return {
       topicName: initialTopic || null,
       caption: initialTopic ? toUnicodeBold(initialTopic) : null,
+      category: fallbackCategory,
     };
   }
 }

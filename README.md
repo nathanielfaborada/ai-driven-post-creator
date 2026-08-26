@@ -132,28 +132,20 @@ flowchart TD
 
 ## ⏰ 24-Hour Schedule Matrix
 
-The posting timetable is structured so Reels and Text Posts alternate every hour:
-
 | Time | Facebook Reels (`NanoFactsPublisherBot`) | Nano Facts (Science Post) | Asta Plays (MLBB Post) |
 | :---: | :---: | :---: | :---: |
 | **12:00 AM** | 🎬 Publish / Recycle Reel | — | — |
 | **1:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **3:00 AM** | 🎬 Publish / Recycle Reel | — | — |
-| **4:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **6:00 AM** | 🎬 Publish / Recycle Reel | — | — |
-| **7:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **9:00 AM** | 🎬 Publish / Recycle Reel | — | — |
-| **10:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
+| **4:00 AM** | 🎬 Publish / Recycle Reel | — | — |
+| **6:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
+| **8:00 AM** | 🎬 Publish / Recycle Reel | — | — |
+| **11:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
 | **12:00 PM** | 🎬 Publish / Recycle Reel | — | — |
-| **1:00 PM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **3:00 PM** | 🎬 Publish / Recycle Reel | — | — |
-| **4:00 PM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **6:00 PM** | 🎬 Publish / Recycle Reel | — | — |
-| **7:00 PM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **9:00 PM** | 🎬 Publish / Recycle Reel | — | — |
-| **10:00 PM** | — | 🔬 Publish Post | 🎮 Publish Post |
+| **4:00 PM** | 🎬 Publish / Recycle Reel | 🔬 Publish Post | 🎮 Publish Post |
+| **8:00 PM** | 🎬 Publish / Recycle Reel | — | — |
+| **9:00 PM** | — | 🔬 Publish Post | 🎮 Publish Post |
 
-*Note: The AI Comment Responder runs in parallel every 3 hours (`0 */3 * * *`), and the Reels Publisher also runs 5 seconds after server startup to process any pending items immediately.*
+*Note: The **AI Comment Responder** runs continuously via Fast Polling every 2 minutes (`*/2 * * * *`) with a natural human typing delay (40–75s) to respond to new comments near instantly and safely.*
 
 ---
 
@@ -199,8 +191,7 @@ cp .env.example .env
 
 | Variable | Description | Example / Format |
 | :--- | :--- | :--- |
-| `OPENAI_API_KEY_ASTA_PLAYS` | Google Gemini API Key for Asta Plays | `AQ.Ab8...` |
-| `OPENAI_API_KEY_NANO_FACTS` | Google Gemini API Key for Nano Facts | `AQ.Ab8...` |
+| `GEMINI_PROJECT_1` .. `_10` | Google Gemini API Keys Pool (Round-Robin & Auto-Failover) | `AQ.Ab8...` |
 | `FB_PAGE_ID_ASTA_PLAYS` | Facebook Page ID for Asta Plays | `349401474923050` |
 | `FB_PAGE_ACCESS_TOKEN_ASTA_PLAYS` | Permanent Page Access Token for Asta Plays | `EAAJ...` |
 | `FB_PAGE_ID_NANO_FACTS` | Facebook Page ID for Nano Facts | `100120852969913` |

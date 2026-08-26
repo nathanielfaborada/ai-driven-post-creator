@@ -12,7 +12,7 @@ const MAX_COMMENT_AGE_HOURS = 24;
  * @param {number} maxSec 
  * @returns {number} Delay in milliseconds
  */
-function getRandomDelay(minSec = 45, maxSec = 90) {
+function getRandomDelay(minSec = 40, maxSec = 75) {
   const seconds = Math.floor(Math.random() * (maxSec - minSec + 1)) + minSec;
   return seconds * 1000;
 }
@@ -27,11 +27,8 @@ function getRandomDelay(minSec = 45, maxSec = 90) {
 async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
   const pageConfig = config[pageKey];
   if (!pageConfig?.pageId || !pageConfig?.pageToken) {
-    console.warn(`[Comment Responder] ⚠️ Missing pageId or pageToken for ${pageTitle} (pageKey: "${pageKey}"). Skipping.`);
     return;
   }
-
-  console.log(`\n[Comment Responder] Checking comments for ${pageTitle}...`);
 
   const repliedIds = getRepliedCommentIds();
   const posts = await getRecentPostsWithComments({
@@ -86,7 +83,13 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
           }
         }
 
-        console.log(`\n[${pageTitle}] Found unreplied comment: "${commentMessage}" by ${comment.from?.name || "User"}`);
+        console.log(`\n[Comment Responder] 💬 New comment on ${pageTitle} by ${comment.from?.name || "User"}: "${commentMessage}"`);
+
+        // Human-paced natural delay before posting the reply (40 - 75 seconds)
+        const delayMs = getRandomDelay(40, 75);
+        const delaySec = Math.round(delayMs / 1000);
+        console.log(`[Comment Responder] ⏳ Waiting ${delaySec}s before replying to maintain natural human pacing...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
 
         // 6. Generate AI response
         const aiReply = await generateCommentReply({
@@ -108,15 +111,9 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
 
           if (replyId) {
             markCommentAsReplied(commentId);
-            console.log(`[${pageTitle}] Reply sent successfully!`);
+            console.log(`[${pageTitle}] ✅ Reply sent successfully to ${comment.from?.name || "User"}!`);
           }
         }
-
-        // 8. Human-paced natural delay before processing the next comment (45 - 90 seconds)
-        const delayMs = getRandomDelay(45, 90);
-        const delaySec = Math.round(delayMs / 1000);
-        console.log(`[${pageTitle}] Pausing for ${delaySec}s before next comment to maintain natural pacing...`);
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
       } catch (commentErr) {
         console.error(`[${pageTitle}] Error processing comment ${comment?.id}:`, commentErr.message);
       }

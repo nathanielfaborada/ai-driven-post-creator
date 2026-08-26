@@ -2,10 +2,100 @@ import { GoogleGenAI } from "@google/genai";
 import { config } from "../config/env.js";
 import { stringToUnicodeBold, toUnicodeBold } from "../utils/formatters.js";
 
-const aiAstaplays = new GoogleGenAI({ apiKey: config.astaPlays?.apiKey || "" });
-const aiNanoFacts = new GoogleGenAI({ apiKey: config.nanoFacts?.apiKey || "" });
+const GEMINI_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-flash-lite-latest",
+];
 
-const GEMINI_MODEL = "gemini-3.6-flash";
+// Key rotation state
+let currentKeyIndex = 0;
+const apiKeys = config.gemini?.apiKeys || [];
+
+if (apiKeys.length === 0) {
+  console.warn("[AI Service] ⚠️ No Gemini API keys found in configuration!");
+} else {
+  console.log(`[AI Service] 🔑 Initialized Gemini Pool with ${apiKeys.length} API key(s) (Round-Robin, Model Fallback & Auto-Failover Enabled).`);
+}
+
+/**
+ * Get current status of the key pool.
+ */
+export function getKeyPoolStatus() {
+  return {
+    totalKeys: apiKeys.length,
+    currentIndex: currentKeyIndex,
+    currentKeyLabel: apiKeys.length > 0 ? `Key #${currentKeyIndex + 1}` : "None",
+    availableModels: GEMINI_MODELS,
+  };
+}
+
+/**
+ * Execute Gemini generateContent with:
+ * 1. Round-Robin API Key rotation (across 10 keys)
+ * 2. Instant Model Fallback on 503 High Demand / Server Spikes (3.6 -> 3.5 -> 3.5-lite -> flash-lite)
+ * 3. Key Failover on 429 Quota Limits
+ * @param {Object} options
+ * @param {string} options.contents - The prompt text/contents
+ * @param {string} [options.taskName] - Descriptive name for logging (e.g. "Asta Plays Caption")
+ * @returns {Promise<string>} Generated text
+ */
+async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
+  if (apiKeys.length === 0) {
+    throw new Error("No Gemini API keys configured. Please check your .env file.");
+  }
+
+  let modelIdx = 0;
+  let lastError = null;
+
+  // Outer loop: Traverse models in priority order
+  while (modelIdx < GEMINI_MODELS.length) {
+    const currentModel = GEMINI_MODELS[modelIdx];
+
+    // Inner loop: Rotate through keys for the current model
+    for (let keyAttempt = 0; keyAttempt < apiKeys.length; keyAttempt++) {
+      const keyIndex = (currentKeyIndex + keyAttempt) % apiKeys.length;
+      const apiKey = apiKeys[keyIndex];
+      const keyLabel = `Key #${keyIndex + 1}/${apiKeys.length}`;
+
+      try {
+        const aiClient = new GoogleGenAI({ apiKey });
+        const response = await aiClient.models.generateContent({
+          model: currentModel,
+          contents,
+        });
+
+        // Advance key round-robin index for subsequent calls
+        currentKeyIndex = (keyIndex + 1) % apiKeys.length;
+
+        console.log(`[AI Service] ✅ [${taskName}] Succeeded using model [${currentModel}] on Gemini ${keyLabel}`);
+        return response.text?.trim() || "";
+      } catch (err) {
+        lastError = err;
+        const isServerDemandError =
+          err.message.includes("503") ||
+          err.message.includes("UNAVAILABLE") ||
+          err.message.includes("high demand") ||
+          err.message.includes("404") ||
+          err.message.includes("NOT_FOUND");
+
+        if (isServerDemandError) {
+          console.warn(`[AI Service] ⚠️ [${taskName}] Model [${currentModel}] 503 high demand / unavailable. Fast-failing over to next fallback model...`);
+          // Break inner key loop to immediately switch to next fallback model
+          break;
+        } else {
+          console.warn(`[AI Service] ⚠️ [${taskName}] Key issue on Gemini ${keyLabel} (${err.message}). Retrying next key...`);
+        }
+      }
+    }
+
+    modelIdx++;
+  }
+
+  throw new Error(`All Gemini models & keys exhausted. Last error: ${lastError?.message}`);
+
+}
 
 /**
  * Generate MLBB Facebook Post Caption for Asta Plays.
@@ -13,8 +103,8 @@ const GEMINI_MODEL = "gemini-3.6-flash";
  */
 export async function generateCaptionAstaPlays() {
   try {
-    const response = await aiAstaplays.models.generateContent({
-      model: GEMINI_MODEL,
+    const text = await executeGeminiWithRotation({
+      taskName: "Asta Plays Caption",
       contents: `
       Generate a short, SEO-optimized, text-only Facebook post about a random Mobile Legends: Bang Bang hero using the EXACT structure below.
 
@@ -53,7 +143,6 @@ export async function generateCaptionAstaPlays() {
       `,
     });
 
-    const text = response.text.trim();
     const heroMatch = text.match(/HERO:\s*(.+)/i);
     const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
     const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
@@ -79,8 +168,8 @@ export async function generateCaptionAstaPlays() {
  */
 export async function generateCaptionNanoFacts() {
   try {
-    const response = await aiNanoFacts.models.generateContent({
-      model: GEMINI_MODEL,
+    const text = await executeGeminiWithRotation({
+      taskName: "Nano Facts Caption",
       contents: `
       Generate a short, SEO-optimized Facebook post about a fascinating topic in SCIENCE & TECHNOLOGY.
       Pick randomly from diverse fields such as:
@@ -126,7 +215,6 @@ export async function generateCaptionNanoFacts() {
       `,
     });
 
-    const text = response.text.trim();
     const topicMatch = text.match(/(?:TOPIC|ELEMENT):\s*(.+)/i);
     const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
     const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
@@ -178,8 +266,8 @@ export async function classifyReelCategory(text = "") {
 
   // AI fallback classification if ambiguous
   try {
-    const res = await aiNanoFacts.models.generateContent({
-      model: GEMINI_MODEL,
+    const rawCategory = await executeGeminiWithRotation({
+      taskName: "Reel Category Classification",
       contents: `
       Classify the following science topic into EXACTLY ONE of these categories: "Biology", "Periodic Table", or "General".
       Topic: "${text}"
@@ -188,7 +276,7 @@ export async function classifyReelCategory(text = "") {
       `,
     });
 
-    const category = res.text.trim();
+    const category = rawCategory.trim();
     if (category.includes("Biology")) return "Biology";
     if (category.includes("Periodic")) return "Periodic Table";
     return "General";
@@ -208,8 +296,8 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
       ? `The creator provided this topic/context for the video reel: "${initialTopic.trim()}". Generate an engaging, high-retention Facebook Reel caption based specifically on this video topic.`
       : `Generate a short, SEO-optimized Facebook Reel caption about a fascinating topic in SCIENCE & TECHNOLOGY. Pick randomly from diverse fields (Astronomy, Quantum Physics, Biology, Nanotechnology, AI, Chemistry, Deep Space, etc.).`;
 
-    const response = await aiNanoFacts.models.generateContent({
-      model: GEMINI_MODEL,
+    const text = await executeGeminiWithRotation({
+      taskName: "Nano Facts Reel Caption",
       contents: `
       ${topicPrompt}
 
@@ -247,7 +335,6 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
       `,
     });
 
-    const text = response.text.trim();
     const topicMatch = text.match(/(?:TOPIC|ELEMENT):\s*(.+)/i);
     const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
     const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
@@ -280,17 +367,17 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
  * @param {string} params.userComment
  * @param {string} [params.postTopic]
  * @param {"astaPlays"|"nanoFacts"} [params.page]
+ * @param {string|null} [params.userName]
  * @returns {Promise<string|null>}
  */
 export async function generateCommentReply({ userComment, postTopic = "our Facebook page", page = "astaPlays", userName = null }) {
   try {
-    const aiInstance = page === "nanoFacts" ? aiNanoFacts : aiAstaplays;
     const persona = page === "nanoFacts"
       ? "Admin of Nano Facts (a page about science and chemistry facts)"
       : "Admin of Asta Plays (a gaming page focused on Mobile Legends: Bang Bang)";
 
-    const response = await aiInstance.models.generateContent({
-      model: GEMINI_MODEL,
+    const reply = await executeGeminiWithRotation({
+      taskName: `Comment Reply (${page})`,
       contents: `
       You are the friendly, helpful, and engaging Facebook page ${persona}.
       ${userName ? `The commenter's name is "${userName}".` : ""}
@@ -307,7 +394,7 @@ export async function generateCommentReply({ userComment, postTopic = "our Faceb
       `,
     });
 
-    return response.text.trim();
+    return reply || null;
   } catch (err) {
     console.error("Error generating comment reply:", err.message);
     return null;
@@ -324,13 +411,12 @@ export async function generateCommentReply({ userComment, postTopic = "our Faceb
  */
 export async function generateMessengerChatReply({ userMessage, page = "astaPlays", userName = null }) {
   try {
-    const aiInstance = page === "nanoFacts" ? aiNanoFacts : aiAstaplays;
     const personaDescription = page === "nanoFacts"
       ? `Admin of Nano Facts (a vibrant science and technology community). You are helpful, enthusiastic, and knowledgeable about science, chemistry, physics, and space. If the user asks for books, study guides, or exclusive PDF materials, you may share our official Subscriber Hub: https://www.facebook.com/nanoscie/subscribe/ .`
       : `Admin of Asta Plays (a Mobile Legends: Bang Bang gaming page). You are friendly, hype, and knowledgeable about MLBB hero builds, counter picks, spells, emblems, and ranked strategy.`;
 
-    const response = await aiInstance.models.generateContent({
-      model: GEMINI_MODEL,
+    const reply = await executeGeminiWithRotation({
+      taskName: `Messenger Chat Reply (${page})`,
       contents: `
       You are responding directly to a private Facebook Messenger direct message (DM).
       Your role: ${personaDescription}
@@ -346,12 +432,13 @@ export async function generateMessengerChatReply({ userMessage, page = "astaPlay
       `,
     });
 
-    return response.text.trim();
+    return reply || null;
   } catch (err) {
     console.error("[AI Service] Error generating Messenger chat reply:", err.message);
     return null;
   }
 }
+
 
 
 

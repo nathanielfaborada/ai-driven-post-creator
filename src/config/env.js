@@ -44,6 +44,11 @@ export const config = {
     url: process.env.SUPABASE_URL,
     key: process.env.SUPABASE_KEY,
   },
+  youtube: {
+    clientId: process.env.YOUTUBE_CLIENT_ID,
+    clientSecret: process.env.YOUTUBE_CLIENT_SECRET,
+    refreshToken: process.env.YOUTUBE_REFRESH_TOKEN,
+  },
   astaPlays: {
     pageId: process.env.FB_PAGE_ID_ASTA_PLAYS,
     pageToken: process.env.FB_PAGE_ACCESS_TOKEN_ASTA_PLAYS,

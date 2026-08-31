@@ -47,7 +47,7 @@ export function getKeyPoolStatus() {
 /**
  * Execute Gemini generateContent with:
  * 1. Round-Robin API Key rotation (across 10 keys)
- * 2. Instant Model Fallback on 503 High Demand / Server Spikes (2.5-flash -> 2.0-flash -> 2.0-flash-lite -> 1.5-flash)
+ * 2. Instant Model Fallback on 503 High Demand / Server Spikes (3.6-flash -> 3.5-flash -> 3.5-flash-lite -> flash-lite-latest)
  * 3. Key Failover on 429 Quota Limits
  * @param {Object} options
  * @param {string} options.contents - The prompt text/contents
@@ -308,7 +308,7 @@ export async function classifyReelCategory(text = "") {
 /**
  * Generate an AI-powered SEO & engagement caption for Facebook Reels based on incoming Telegram caption/topic.
  * @param {string} [initialTopic] - Topic or raw caption provided via Telegram
- * @returns {Promise<{ topicName: string|null, caption: string|null, category: string }>}
+ * @returns {Promise<{ topicName: string|null, rawTitle: string|null, caption: string|null, category: string }>}
  */
 export async function generateReelCaptionNanoFacts(initialTopic = "") {
   try {
@@ -369,16 +369,58 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
 
     const category = await classifyReelCategory(topicName || initialTopic || text);
 
-    return { topicName, caption, category };
+    return { topicName, rawTitle, caption, category };
   } catch (err) {
     console.error("Error generating Nano Facts Reel caption:", err.message);
     const fallbackCategory = await classifyReelCategory(initialTopic || "");
     return {
       topicName: initialTopic || null,
+      rawTitle: initialTopic || null,
       caption: initialTopic ? toUnicodeBold(initialTopic) : null,
       category: fallbackCategory,
     };
   }
+}
+
+/**
+ * Generate YouTube Shorts specific title, description, and tags based on video topic.
+ * @param {Object} params
+ * @param {string} [params.topicName]
+ * @param {string} [params.category]
+ * @param {string} [params.rawTitle]
+ * @returns {{ title: string, description: string, tags: string[] }}
+ */
+export function generateYouTubeShortsMetadata({ topicName = "Science Fact", category = "Science", rawTitle = null }) {
+  const cleanCategory = (category || "Science").replace(/[^a-zA-Z0-9]/g, "");
+  const baseTitle = rawTitle || topicName || "Mind-Blowing Science Discovery";
+
+  // Format Title under 90 chars ending with #Shorts
+  let title = `${baseTitle} 🔬 #Shorts`;
+  if (title.length > 95) {
+    title = `${baseTitle.slice(0, 80).trim()}... #Shorts`;
+  }
+
+  const description = `${baseTitle} 🌌
+
+Did you know this fascinating science discovery about ${topicName || "our universe"}?
+
+Subscribe to our channel for more daily science, physics, biology & space facts! 🔬📚
+
+#Shorts #Science #Technology #NanoFacts #${cleanCategory} #STEM #Educational`;
+
+  const tags = [
+    "Shorts",
+    "Science",
+    "Technology",
+    "Nano Facts",
+    "Science Facts",
+    "Educational",
+    "STEM",
+    cleanCategory,
+    topicName || "Science",
+  ];
+
+  return { title, description, tags };
 }
 
 /**

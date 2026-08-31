@@ -1,13 +1,14 @@
-# Facebook & Telegram AI-Driven Automation Engine
+# Facebook, YouTube & Telegram AI-Driven Automation Engine
 
-A production-grade backend automation engine built with Node.js that powers 24/7 scheduled content creation, multi-channel Telegram video reels publishing with **Supabase Database Persistence**, intelligent comment auto-responding, and 10-category evergreen content recycling across multiple Facebook Pages.
+A production-grade multi-platform automation backend built with Node.js that powers 24/7 scheduled content creation, multi-channel Telegram video reels publishing, **Facebook Reels & YouTube Shorts Cross-Posting**, intelligent comment auto-responding, and 10-category evergreen content recycling across multiple platforms.
 
 ---
 
-## 🌟 Managed Facebook Pages & Hubs
+## 🌟 Managed Facebook Pages & Channels
 
 * **Nano Facts** — Science, Deep Space & Technology Page
   * Facebook Page: [facebook.com/nanoscie](https://www.facebook.com/nanoscie)
+  * YouTube Channel: [youtube.com/@nielskysgamingtv1835](https://www.youtube.com/@nielskysgamingtv1835)
   * Subscription Hub: [facebook.com/nanoscie/subscribe](https://www.facebook.com/nanoscie/subscribe/)
 * **Asta Plays** — Mobile Legends: Bang Bang (MLBB) Gaming Page
   * Facebook Page: [facebook.com/astaplasys05](https://www.facebook.com/astaplasys05)
@@ -34,21 +35,23 @@ flowchart TD
     end
 
     subgraph Core_Engine["Automation Schedulers & Workers"]
-        CronSched["node-schedule"] --> ReelsWorker["Reels Publisher Worker\n(Every 4 Hours + Startup)"]
+        CronSched["node-schedule"] --> ReelsWorker["Reels & Shorts Publisher Worker\n(Every 4 Hours + Startup)"]
         CronSched --> TextWorker["Text Content Worker\n(Every 5 Hours + Startup)"]
         CronSched --> CommentWorker["Comment Responder Worker\n(Fast Polling Every 2m)"]
     end
 
     subgraph AI_Intelligence["Google Gemini AI Pool"]
-        ReelsWorker -->|Expand Caption & Classify| GeminiReels["Gemini 2.5 Flash / 2.0 Flash\n(Caption & 10-Category Router)"]
-        TextWorker -->|Generate Science & Gaming Posts| GeminiText["Gemini 2.5 Flash / 2.0 Flash\n(Post Creator)"]
-        CommentWorker -->|Generate Contextual Reply| GeminiComment["Gemini 2.5 Flash / 2.0 Flash\n(Persona Responder)"]
+        ReelsWorker -->|Expand Caption & Classify| GeminiReels["Gemini 3.6 Flash / 3.5 Flash\n(Caption & 10-Category Router)"]
+        ReelsWorker -->|Generate YouTube SEO Metadata| GeminiYT["Gemini 3.6 Flash\n(Shorts Title, Description, Tags)"]
+        TextWorker -->|Generate Science & Gaming Posts| GeminiText["Gemini 3.6 Flash\n(Post Creator)"]
+        CommentWorker -->|Generate Contextual Reply| GeminiComment["Gemini 3.6 Flash\n(Persona Responder)"]
     end
 
-    subgraph Meta_API["Meta Graph API v26.0"]
-        ReelsWorker -->|3-Phase Video Reel Upload| FBReelsAPI["/{pageId}/video_reels"]
-        TextWorker -->|Publish Feed Post| FBFeedAPI["/{pageId}/feed"]
-        CommentWorker -->|Post Sub-Comment Reply| FBCommentAPI["/{commentId}/comments"]
+    subgraph Social_Platforms["Multi-Platform Social Distribution"]
+        ReelsWorker -->|1. Publish Facebook Reel (v26.0)| FBReelsAPI["Facebook: /{pageId}/video_reels"]
+        ReelsWorker -->|2. Cross-Post YouTube Short (v3)| YTShortsAPI["YouTube: /videos.insert (Shorts)"]
+        TextWorker -->|Publish Feed Post| FBFeedAPI["Facebook: /{pageId}/feed"]
+        CommentWorker -->|Post Sub-Comment Reply| FBCommentAPI["Facebook: /{commentId}/comments"]
     end
 
     ReelsWorker -->|copyMessage to respective Category Archive| Ch1 & Ch2 & Ch3 & Ch4_10
@@ -86,7 +89,7 @@ CREATE TABLE IF NOT EXISTS reels_archive (
     fb_video_id TEXT
 );
 
--- Indexes para mabilis ang category at least-reposted query
+-- Indexes para mabilis ang query
 CREATE INDEX IF NOT EXISTS idx_reels_archive_category ON reels_archive(category);
 CREATE INDEX IF NOT EXISTS idx_reels_archive_repost ON reels_archive(repost_count ASC);
 ```
@@ -112,20 +115,18 @@ CREATE INDEX IF NOT EXISTS idx_reels_archive_repost ON reels_archive(repost_coun
 
 ## ⏰ 24-Hour Schedule Matrix
 
-| Time | Facebook Reels (`NanoFactsPublisherBot`) | Nano Facts (Science Post) | Asta Plays (MLBB Post) |
+| Time | Facebook Reels & YouTube Shorts | Nano Facts (Science Post) | Asta Plays (MLBB Post) |
 | :---: | :---: | :---: | :---: |
-| **12:00 AM** | 🎬 Publish / Recycle Reel | — | — |
+| **12:00 AM** | 🎬 Cross-Post Reel & Short | — | — |
 | **1:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **4:00 AM** | 🎬 Publish / Recycle Reel | — | — |
+| **4:00 AM** | 🎬 Cross-Post Reel & Short | — | — |
 | **6:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **8:00 AM** | 🎬 Publish / Recycle Reel | — | — |
+| **8:00 AM** | 🎬 Cross-Post Reel & Short | — | — |
 | **11:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **12:00 PM** | 🎬 Publish / Recycle Reel | — | — |
-| **4:00 PM** | 🎬 Publish / Recycle Reel | 🔬 Publish Post | 🎮 Publish Post |
-| **8:00 PM** | 🎬 Publish / Recycle Reel | — | — |
+| **12:00 PM** | 🎬 Cross-Post Reel & Short | — | — |
+| **4:00 PM** | 🎬 Cross-Post Reel & Short | 🔬 Publish Post | 🎮 Publish Post |
+| **8:00 PM** | 🎬 Cross-Post Reel & Short | — | — |
 | **9:00 PM** | — | 🔬 Publish Post | 🎮 Publish Post |
-
-*Note: The **AI Comment Responder** runs continuously via Fast Polling every 2 minutes (`*/2 * * * *`) with a natural human typing delay (40–75s) to respond to new comments near instantly and safely.*
 
 ---
 
@@ -138,18 +139,12 @@ CREATE INDEX IF NOT EXISTS idx_reels_archive_repost ON reels_archive(repost_coun
 | `FB_PAGE_ACCESS_TOKEN_ASTA_PLAYS` | Permanent Page Access Token for Asta Plays |
 | `FB_PAGE_ID_NANO_FACTS` | Facebook Page ID for Nano Facts |
 | `FB_PAGE_ACCESS_TOKEN_NANO_FACTS` | Permanent Page Access Token for Nano Facts |
+| `YOUTUBE_CLIENT_ID` | Google Cloud OAuth2 Client ID |
+| `YOUTUBE_CLIENT_SECRET` | Google Cloud OAuth2 Client Secret |
+| `YOUTUBE_REFRESH_TOKEN` | Google OAuth2 Refresh Token for YouTube |
 | `TELEGRAM_BOT_TOKEN` | Bot API Token from `@BotFather` |
 | `TELEGRAM_CHANNEL_QUEUE_ID` | Telegram Channel 1 ID (`FB Reels to Post`) |
-| `TG_CHANNEL_BIOLOGY_ID` | Channel ID for Human Biology & Anatomy |
-| `TG_CHANNEL_CHEMISTRY_ID` | Channel ID for Chemistry & Periodic Table |
-| `TG_CHANNEL_ASTRONOMY_ID` | Channel ID for Astronomy & Deep Space |
-| `TG_CHANNEL_PHYSICS_ID` | Channel ID for Quantum & Modern Physics |
-| `TG_CHANNEL_ROBOTICS_ID` | Channel ID for AI, Robotics & Future Technology |
-| `TG_CHANNEL_OCEAN_ID` | Channel ID for Deep Sea & Ocean Mysteries |
-| `TG_CHANNEL_EARTH_ID` | Channel ID for Earth Sciences & Extreme Nature |
-| `TG_CHANNEL_MATERIALS_ID` | Channel ID for Materials Science & Nanotechnology |
-| `TG_CHANNEL_PALEONTOLOGY_ID` | Channel ID for Paleontology & Prehistoric Life |
-| `TG_CHANNEL_ROCKETS_ID` | Channel ID for Rocket Science & Space Missions |
+| `TG_CHANNEL_BIOLOGY_ID` ... `_ROCKETS_ID` | 10 Telegram Category Archive Channels |
 | `SUPABASE_URL` | Supabase Project URL (`https://xyz.supabase.co`) |
 | `SUPABASE_KEY` | Supabase Service Role Key |
 | `PORT` | Webhook HTTP Server Port (Default: `3000` / `8080`) |

@@ -1,7 +1,7 @@
 {
   "name": "facebook-auto-poster",
   "version": "1.0.0",
-  "description": "Auto-generate Facebook captions using OpenAI and post every hour",
+  "description": "24/7 AI-driven Facebook posts and Telegram Reels automation using Google Gemini and Supabase",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -9,7 +9,9 @@
   },
   "keywords": [
     "facebook",
-    "openai",
+    "gemini",
+    "supabase",
+    "telegram",
     "automation",
     "scheduler",
     "nodejs"
@@ -18,11 +20,10 @@
   "license": "MIT",
   "dependencies": {
     "@google/genai": "^1.30.0",
+    "@supabase/supabase-js": "^2.112.4",
     "axios": "^1.13.2",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
-    "googleapis": "^172.0.0",
-    "node-schedule": "^2.1.1",
-    "openai": "^5.4.0"
+    "node-schedule": "^2.1.1"
   }
 }

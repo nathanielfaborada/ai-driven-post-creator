@@ -2,11 +2,24 @@ import { GoogleGenAI } from "@google/genai";
 import { config } from "../config/env.js";
 import { stringToUnicodeBold, toUnicodeBold } from "../utils/formatters.js";
 
+export const SCIENCE_CATEGORIES = [
+  "Human Biology & Anatomy",
+  "Chemistry & Periodic Table",
+  "Astronomy & Deep Space",
+  "Quantum & Modern Physics",
+  "AI, Robotics & Future Technology",
+  "Deep Sea & Ocean Mysteries",
+  "Earth Sciences & Extreme Nature",
+  "Materials Science & Nanotechnology",
+  "Paleontology & Prehistoric Life",
+  "Rocket Science & Space Missions",
+];
+
 const GEMINI_MODELS = [
-  "gemini-3.6-flash",
-  "gemini-3.5-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-flash-lite-latest",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-flash",
 ];
 
 // Key rotation state
@@ -34,11 +47,11 @@ export function getKeyPoolStatus() {
 /**
  * Execute Gemini generateContent with:
  * 1. Round-Robin API Key rotation (across 10 keys)
- * 2. Instant Model Fallback on 503 High Demand / Server Spikes (3.6 -> 3.5 -> 3.5-lite -> flash-lite)
+ * 2. Instant Model Fallback on 503 High Demand / Server Spikes (2.5-flash -> 2.0-flash -> 2.0-flash-lite -> 1.5-flash)
  * 3. Key Failover on 429 Quota Limits
  * @param {Object} options
  * @param {string} options.contents - The prompt text/contents
- * @param {string} [options.taskName] - Descriptive name for logging (e.g. "Asta Plays Caption")
+ * @param {string} [options.taskName] - Descriptive name for logging
  * @returns {Promise<string>} Generated text
  */
 async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
@@ -49,11 +62,9 @@ async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
   let modelIdx = 0;
   let lastError = null;
 
-  // Outer loop: Traverse models in priority order
   while (modelIdx < GEMINI_MODELS.length) {
     const currentModel = GEMINI_MODELS[modelIdx];
 
-    // Inner loop: Rotate through keys for the current model
     for (let keyAttempt = 0; keyAttempt < apiKeys.length; keyAttempt++) {
       const keyIndex = (currentKeyIndex + keyAttempt) % apiKeys.length;
       const apiKey = apiKeys[keyIndex];
@@ -66,23 +77,20 @@ async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
           contents,
         });
 
-        // Advance key round-robin index for subsequent calls
         currentKeyIndex = (keyIndex + 1) % apiKeys.length;
-
         console.log(`[AI Service] ✅ [${taskName}] Succeeded using model [${currentModel}] on Gemini ${keyLabel}`);
         return response.text?.trim() || "";
       } catch (err) {
         lastError = err;
         const isServerDemandError =
-          err.message.includes("503") ||
-          err.message.includes("UNAVAILABLE") ||
-          err.message.includes("high demand") ||
-          err.message.includes("404") ||
-          err.message.includes("NOT_FOUND");
+          err.message?.includes("503") ||
+          err.message?.includes("UNAVAILABLE") ||
+          err.message?.includes("high demand") ||
+          err.message?.includes("404") ||
+          err.message?.includes("NOT_FOUND");
 
         if (isServerDemandError) {
           console.warn(`[AI Service] ⚠️ [${taskName}] Model [${currentModel}] 503 high demand / unavailable. Fast-failing over to next fallback model...`);
-          // Break inner key loop to immediately switch to next fallback model
           break;
         } else {
           console.warn(`[AI Service] ⚠️ [${taskName}] Key issue on Gemini ${keyLabel} (${err.message}). Retrying next key...`);
@@ -94,7 +102,6 @@ async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
   }
 
   throw new Error(`All Gemini models & keys exhausted. Last error: ${lastError?.message}`);
-
 }
 
 /**
@@ -124,7 +131,6 @@ export async function generateCaptionAstaPlays() {
 
       👍 Like, Share & Follow for more MLBB guides and hero spotlights.
 
-      
       {10–15 comma-separated SEO keywords including hero name, role, Mobile Legends, MLBB, gameplay, build guide, hero guide, ranked, esports, MOBA, strategy}
 
       Exactly 5 hashtags:
@@ -143,12 +149,12 @@ export async function generateCaptionAstaPlays() {
       `,
     });
 
-    const heroMatch = text.match(/HERO:\s*(.+)/i);
-    const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
-    const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
+    const heroMatch = text.match(/(?:\*\*|##\s*)?HERO:?\*?\*?\s*(.+)/i);
+    const titleMatch = text.match(/(?:\*\*|##\s*)?TITLE:?\*?\*?\s*([\s\S]+?)(?=\n\s*(?:\*\*|##\s*)?CAPTION:|$)/i);
+    const captionMatch = text.match(/(?:\*\*|##\s*)?CAPTION:?\*?\*?\s*([\s\S]+)/i);
 
-    const heroName = heroMatch ? heroMatch[1].trim() : null;
-    const rawTitle = titleMatch ? titleMatch[1].trim() : null;
+    const heroName = heroMatch ? heroMatch[1].replace(/[*#_]/g, "").trim() : null;
+    const rawTitle = titleMatch ? titleMatch[1].replace(/[*#_]/g, "").trim() : null;
     const rawBody = captionMatch ? captionMatch[1].trim() : text;
 
     const boldTitle = rawTitle ? stringToUnicodeBold(rawTitle) : "";
@@ -215,12 +221,12 @@ export async function generateCaptionNanoFacts() {
       `,
     });
 
-    const topicMatch = text.match(/(?:TOPIC|ELEMENT):\s*(.+)/i);
-    const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
-    const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
+    const topicMatch = text.match(/(?:\*\*|##\s*)?(?:TOPIC|ELEMENT):?\*?\*?\s*(.+)/i);
+    const titleMatch = text.match(/(?:\*\*|##\s*)?TITLE:?\*?\*?\s*([\s\S]+?)(?=\n\s*(?:\*\*|##\s*)?CAPTION:|$)/i);
+    const captionMatch = text.match(/(?:\*\*|##\s*)?CAPTION:?\*?\*?\s*([\s\S]+)/i);
 
-    const topicName = topicMatch ? topicMatch[1].trim() : null;
-    const rawTitle = titleMatch ? titleMatch[1].trim() : null;
+    const topicName = topicMatch ? topicMatch[1].replace(/[*#_]/g, "").trim() : null;
+    const rawTitle = titleMatch ? titleMatch[1].replace(/[*#_]/g, "").trim() : null;
     const rawBody = captionMatch ? captionMatch[1].trim() : text;
 
     const boldTitle = rawTitle ? stringToUnicodeBold(rawTitle) : "";
@@ -235,60 +241,74 @@ export async function generateCaptionNanoFacts() {
 }
 
 /**
- * Classify a science topic or caption into "Biology", "Periodic Table", or "General".
+ * Classify a science topic or caption into one of the 10 official categories.
  * @param {string} text - Topic or text to classify
- * @returns {Promise<"Biology"|"Periodic Table"|"General">}
+ * @returns {Promise<string>} Category name
  */
 export async function classifyReelCategory(text = "") {
   if (!text || !text.trim()) {
-    return "General";
+    return "Human Biology & Anatomy";
   }
 
   const lower = text.toLowerCase();
-  
+
   // Fast keyword matching
-  const bioKeywords = [
-    "cell", "dna", "gene", "biology", "organ", "human body", "bacteria", "virus", 
-    "evolution", "brain", "neuron", "mitochondria", "photosynthesis", "species", 
-    "animal", "plant", "heart", "blood", "immune", "ecosystem", "protein", "enzyme"
-  ];
-  const chemKeywords = [
-    "periodic table", "element", "chemistry", "atom", "molecule", "chemical", 
-    "reaction", "proton", "electron", "neutron", "acid", "metal", "gas", "compound", 
-    "oxygen", "hydrogen", "carbon", "gold", "iron", "uranium", "helium", "nitrogen"
-  ];
-
-  const hasBio = bioKeywords.some((k) => lower.includes(k));
-  const hasChem = chemKeywords.some((k) => lower.includes(k));
-
-  if (hasBio && !hasChem) return "Biology";
-  if (hasChem && !hasBio) return "Periodic Table";
+  if (lower.includes("dna") || lower.includes("cell") || lower.includes("brain") || lower.includes("neuron") || lower.includes("body") || lower.includes("heart") || lower.includes("blood") || lower.includes("immune") || lower.includes("bacteria") || lower.includes("organ") || lower.includes("virus")) {
+    return "Human Biology & Anatomy";
+  }
+  if (lower.includes("periodic") || lower.includes("chemical") || lower.includes("chemistry") || lower.includes("element") || lower.includes("atom") || lower.includes("molecule") || lower.includes("acid") || lower.includes("reaction") || lower.includes("compound")) {
+    return "Chemistry & Periodic Table";
+  }
+  if (lower.includes("black hole") || lower.includes("galaxy") || lower.includes("space") || lower.includes("star") || lower.includes("telescope") || lower.includes("planet") || lower.includes("exoplanet") || lower.includes("supernova") || lower.includes("nebula") || lower.includes("astronomy")) {
+    return "Astronomy & Deep Space";
+  }
+  if (lower.includes("quantum") || lower.includes("laser") || lower.includes("physics") || lower.includes("relativity") || lower.includes("particle") || lower.includes("optics") || lower.includes("accelerator")) {
+    return "Quantum & Modern Physics";
+  }
+  if (lower.includes("robot") || lower.includes("ai") || lower.includes("intelligence") || lower.includes("cyber") || lower.includes("tech") || lower.includes("algorithm") || lower.includes("future")) {
+    return "AI, Robotics & Future Technology";
+  }
+  if (lower.includes("ocean") || lower.includes("sea") || lower.includes("trench") || lower.includes("mariana") || lower.includes("shark") || lower.includes("whale") || lower.includes("squid") || lower.includes("bioluminescen") || lower.includes("abyss") || lower.includes("underwater")) {
+    return "Deep Sea & Ocean Mysteries";
+  }
+  if (lower.includes("volcano") || lower.includes("earthquake") || lower.includes("storm") || lower.includes("tornado") || lower.includes("lightning") || lower.includes("earth") || lower.includes("geology") || lower.includes("nature") || lower.includes("crystal")) {
+    return "Earth Sciences & Extreme Nature";
+  }
+  if (lower.includes("graphene") || lower.includes("aerogel") || lower.includes("nanotech") || lower.includes("material") || lower.includes("superconductor") || lower.includes("polymer") || lower.includes("carbon nanotube")) {
+    return "Materials Science & Nanotechnology";
+  }
+  if (lower.includes("dinosaur") || lower.includes("fossil") || lower.includes("prehistoric") || lower.includes("megalodon") || lower.includes("mammoth") || lower.includes("paleontology") || lower.includes("extinction")) {
+    return "Paleontology & Prehistoric Life";
+  }
+  if (lower.includes("rocket") || lower.includes("mars") || lower.includes("nasa") || lower.includes("spacex") || lower.includes("starship") || lower.includes("rover") || lower.includes("satellite") || lower.includes("launch") || lower.includes("orbit")) {
+    return "Rocket Science & Space Missions";
+  }
 
   // AI fallback classification if ambiguous
   try {
     const rawCategory = await executeGeminiWithRotation({
       taskName: "Reel Category Classification",
       contents: `
-      Classify the following science topic into EXACTLY ONE of these categories: "Biology", "Periodic Table", or "General".
+      Classify the following science topic into EXACTLY ONE of these 10 categories:
+      ${SCIENCE_CATEGORIES.map((c) => `- "${c}"`).join("\n")}
+
       Topic: "${text}"
 
-      Respond with ONLY the category name.
+      Respond with ONLY the exact category name from the list.
       `,
     });
 
-    const category = rawCategory.trim();
-    if (category.includes("Biology")) return "Biology";
-    if (category.includes("Periodic")) return "Periodic Table";
-    return "General";
+    const matched = SCIENCE_CATEGORIES.find((cat) => rawCategory.toLowerCase().includes(cat.toLowerCase()));
+    return matched || "Human Biology & Anatomy";
   } catch {
-    return hasBio ? "Biology" : hasChem ? "Periodic Table" : "General";
+    return "Human Biology & Anatomy";
   }
 }
 
 /**
- * Generate an AI-powered SEO & engagement caption for Facebook Reels based on the incoming Telegram caption/topic.
+ * Generate an AI-powered SEO & engagement caption for Facebook Reels based on incoming Telegram caption/topic.
  * @param {string} [initialTopic] - Topic or raw caption provided via Telegram
- * @returns {Promise<{ topicName: string|null, caption: string|null, category: "Biology"|"Periodic Table"|"General" }>}
+ * @returns {Promise<{ topicName: string|null, caption: string|null, category: string }>}
  */
 export async function generateReelCaptionNanoFacts(initialTopic = "") {
   try {
@@ -335,12 +355,12 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
       `,
     });
 
-    const topicMatch = text.match(/(?:TOPIC|ELEMENT):\s*(.+)/i);
-    const titleMatch = text.match(/TITLE:\s*([\s\S]+?)(?=\n\s*CAPTION:|$)/i);
-    const captionMatch = text.match(/CAPTION:\s*([\s\S]+)/i);
+    const topicMatch = text.match(/(?:\*\*|##\s*)?(?:TOPIC|ELEMENT):?\*?\*?\s*(.+)/i);
+    const titleMatch = text.match(/(?:\*\*|##\s*)?TITLE:?\*?\*?\s*([\s\S]+?)(?=\n\s*(?:\*\*|##\s*)?CAPTION:|$)/i);
+    const captionMatch = text.match(/(?:\*\*|##\s*)?CAPTION:?\*?\*?\s*([\s\S]+)/i);
 
-    const topicName = topicMatch ? topicMatch[1].trim() : (initialTopic || null);
-    const rawTitle = titleMatch ? titleMatch[1].trim() : null;
+    const topicName = topicMatch ? topicMatch[1].replace(/[*#_]/g, "").trim() : (initialTopic || null);
+    const rawTitle = titleMatch ? titleMatch[1].replace(/[*#_]/g, "").trim() : null;
     const rawBody = captionMatch ? captionMatch[1].trim() : text;
 
     const boldTitle = rawTitle ? stringToUnicodeBold(rawTitle) : "";
@@ -438,7 +458,3 @@ export async function generateMessengerChatReply({ userMessage, page = "astaPlay
     return null;
   }
 }
-
-
-
-

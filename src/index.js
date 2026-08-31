@@ -4,6 +4,7 @@ import { runNanoJob } from "./jobs/nanoFacts.job.js";
 import { runCommentResponderJob } from "./jobs/commentResponder.job.js";
 import { runReelsPublisherJob } from "./jobs/reelsPublisher.job.js";
 import { startTelegramListener } from "./services/telegram.service.js";
+import { testSupabaseConnection } from "./services/supabase.service.js";
 // import { startServer } from "./server.js";
 
 console.log("=========================================");
@@ -19,10 +20,19 @@ process.on("uncaughtException", (err) => {
   console.error("[Process] Uncaught Exception:", err);
 });
 
+// Test Supabase Database Connection
+testSupabaseConnection().then((connected) => {
+  if (connected) {
+    console.log("[Boot] 📦 Supabase database active for Reels Queue & Evergreen Archive.");
+  } else {
+    console.warn("[Boot] ⚠️ Supabase not yet initialized. Please run the SQL schema in Supabase SQL Editor.");
+  }
+});
+
 // [DISABLED FOR NOW] Express Webhook Server (for Facebook Messenger AI Auto-Reply)
 // startServer();
 
-// Start Telegram Queue Listener in background
+// Start Telegram Queue & 10-Channel Listener in background
 startTelegramListener();
 
 // Run posting jobs once immediately on startup safely
@@ -59,5 +69,3 @@ schedule.scheduleJob("0 0,4,8,12,16,20 * * *", () => {
   console.log("\n[Scheduler] Running Facebook Reels Auto-Publisher at:", new Date().toLocaleString());
   runReelsPublisherJob();
 });
-
-

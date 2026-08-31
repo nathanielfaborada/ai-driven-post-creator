@@ -40,6 +40,10 @@ export const config = {
   gemini: {
     apiKeys: getGeminiApiKeys(),
   },
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_KEY,
+  },
   astaPlays: {
     pageId: process.env.FB_PAGE_ID_ASTA_PLAYS,
     pageToken: process.env.FB_PAGE_ACCESS_TOKEN_ASTA_PLAYS,
@@ -51,8 +55,19 @@ export const config = {
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
     queueChannelId: process.env.TELEGRAM_CHANNEL_QUEUE_ID,
-    archiveBiologyChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_BIOLOGY_ID,
-    archivePeriodicChannelId: process.env.TELEGRAM_CHANNEL_ARCHIVE_PERIODIC_ID,
+    // 10-Channel Category Archive Mapping
+    archiveChannels: {
+      "Human Biology & Anatomy": process.env.TG_CHANNEL_BIOLOGY_ID || process.env.TELEGRAM_CHANNEL_ARCHIVE_BIOLOGY_ID,
+      "Chemistry & Periodic Table": process.env.TG_CHANNEL_CHEMISTRY_ID || process.env.TELEGRAM_CHANNEL_ARCHIVE_PERIODIC_ID,
+      "Astronomy & Deep Space": process.env.TG_CHANNEL_ASTRONOMY_ID,
+      "Quantum & Modern Physics": process.env.TG_CHANNEL_PHYSICS_ID,
+      "AI, Robotics & Future Technology": process.env.TG_CHANNEL_ROBOTICS_ID,
+      "Deep Sea & Ocean Mysteries": process.env.TG_CHANNEL_OCEAN_ID,
+      "Earth Sciences & Extreme Nature": process.env.TG_CHANNEL_EARTH_ID,
+      "Materials Science & Nanotechnology": process.env.TG_CHANNEL_MATERIALS_ID,
+      "Paleontology & Prehistoric Life": process.env.TG_CHANNEL_PALEONTOLOGY_ID,
+      "Rocket Science & Space Missions": process.env.TG_CHANNEL_ROCKETS_ID,
+    },
   },
   server: {
     port: Number(process.env.PORT) || 8080,
@@ -61,5 +76,3 @@ export const config = {
     verifyToken: process.env.FB_VERIFY_TOKEN || "my_facebook_webhook_secret_token",
   },
 };
-
-

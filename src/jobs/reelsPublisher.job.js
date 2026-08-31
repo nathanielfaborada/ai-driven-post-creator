@@ -19,9 +19,9 @@ export async function runReelsPublisherJob() {
   console.log("[Reels Publisher] 🎬 Starting Reels Posting Workflow...");
   console.log("=========================================");
 
-  logArchiveStats();
+  await logArchiveStats();
 
-  const queue = getQueue();
+  const queue = await getQueue();
 
   if (queue.length > 0) {
     // 1. Process FIFO item from queue (Top-most / oldest)
@@ -60,14 +60,14 @@ export async function runReelsPublisherJob() {
   } else {
     // 2. Fallback: Queue is empty -> Pick from Archive (Requires at least 10 videos per category)
     const MIN_ARCHIVE_COUNT = 10;
-    const archiveItem = getRandomArchiveItem(MIN_ARCHIVE_COUNT);
+    const archiveItem = await getRandomArchiveItem(MIN_ARCHIVE_COUNT);
 
     if (!archiveItem) {
-      console.log(`[Reels Publisher] ℹ️ Queue is empty and Archive has fewer than ${MIN_ARCHIVE_COUNT} videos. At least ${MIN_ARCHIVE_COUNT} archived videos are required before recycling starts to avoid repetitive posts. Waiting for new uploads in Channel 1.`);
+      console.log(`[Reels Publisher] ℹ️ Queue is empty and Archive has fewer than ${MIN_ARCHIVE_COUNT} videos. At least ${MIN_ARCHIVE_COUNT} archived videos are required per category before recycling starts to avoid repetitive posts. Waiting for new uploads in Channel 1.`);
       return;
     }
 
-    console.log(`[Reels Publisher] 🔄 Selected archived reel (Repost Count: ${archiveItem.repostCount || 0}). Downloading...`);
+    console.log(`[Reels Publisher] 🔄 Selected archived reel from [${archiveItem.category || "General"}] (Repost Count: ${archiveItem.repostCount || 0}). Downloading...`);
     const videoBuffer = await downloadVideoBuffer(archiveItem.fileId);
 
     if (!videoBuffer) {
@@ -91,7 +91,7 @@ export async function runReelsPublisherJob() {
 
     if (fbRes.success) {
       console.log(`[Reels Publisher] ✅ Successfully reposted archived reel to Facebook! Video ID: ${fbRes.videoId}`);
-      markArchiveItemReposted(archiveItem.fileId);
+      await markArchiveItemReposted(archiveItem.fileId);
     } else {
       console.error("[Reels Publisher] ❌ Facebook reposting failed:", fbRes.error);
     }

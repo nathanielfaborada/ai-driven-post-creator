@@ -1,0 +1,408 @@
+/* ==========================================================================
+   SUDONATH FLOW // CORE SYSTEM STYLES & DESIGN TOKENS
+   Human-Crafted Brutalist Editorial UI System
+   ========================================================================== */
+
+:root {
+  /* Obsidian & Zinc Monochromatic Base (90% of UI) */
+  --bg-app: #09090b;
+  --bg-surface-1: #121215;
+  --bg-surface-2: #18181b;
+  --bg-surface-3: #27272a;
+  
+  /* Physical 1px Micro-Borders */
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-strong: #27272a;
+  --border-hover: #3f3f46;
+  --border-accent: #f59e0b;
+  
+  /* High-Contrast Typographic Scale */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-inverse: #09090b;
+  
+  /* Intentional Industrial Amber Gold (Reserved for Key Touchpoints) */
+  --amber-primary: #f59e0b;
+  --amber-hover: #d97706;
+  --amber-muted: rgba(245, 158, 11, 0.12);
+  --amber-border: rgba(245, 158, 11, 0.35);
+
+  /* Status Colors */
+  --status-live: #10b981;
+  --status-live-bg: rgba(16, 185, 129, 0.12);
+
+  /* Typography Stacks */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  
+  /* Fast Tactile Transition */
+  --transition-fast: all 0.15s ease-out;
+}
+
+/* Global Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--bg-app);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Layout Utilities */
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Monospace Telemetry & Metadata */
+.mono-meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Top Navigation Bar */
+.site-nav {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background-color: rgba(9, 9, 11, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: 1000;
+  padding: 12px 0;
+  overflow: hidden;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 16px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.brand-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.brand-spec {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--amber-primary);
+  padding: 2px 6px;
+  border: 1px solid var(--amber-border);
+  background: var(--amber-muted);
+  border-radius: 4px;
+  margin-left: 2px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+}
+
+.nav-btn {
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-btn-text-mobile {
+  display: none;
+}
+
+.nav-btn-text-desktop {
+  display: inline;
+}
+
+/* Tactile Physical Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--amber-primary);
+  color: var(--text-inverse);
+  border-color: var(--amber-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--amber-hover);
+  border-color: var(--amber-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-surface-3);
+  border-color: var(--border-hover);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
+.btn-ghost:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+/* Status Indicator Pill */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background-color: var(--bg-surface-2);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--status-live);
+  box-shadow: 0 0 8px var(--status-live);
+}
+
+/* Site Footer */
+.site-footer {
+  border-top: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface-1);
+  padding: 60px 0 40px;
+  margin-top: 100px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+
+.footer-meta {
+  max-width: 380px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.footer-brand strong {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.footer-credit {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.footer-author-link {
+  color: var(--amber-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition-fast);
+}
+
+.footer-author-link:hover {
+  color: var(--amber-hover);
+  text-decoration: underline;
+}
+
+.footer-copyright {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.footer-nav {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-heading {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.footer-link {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+.footer-link:hover {
+  color: var(--text-primary);
+}
+
+/* Mobile Responsiveness Polish (< 768px) */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+  .site-nav {
+    padding: 10px 0;
+  }
+  .nav-container {
+    gap: 10px;
+  }
+  .nav-brand {
+    font-size: 0.9rem;
+    gap: 8px;
+  }
+  .brand-badge {
+    width: 26px;
+    height: 26px;
+  }
+  /* Hide non-essential secondary badge on mobile */
+  .brand-spec {
+    display: none;
+  }
+  /* Hide desktop text links on mobile */
+  .nav-link {
+    display: none;
+  }
+  .nav-menu {
+    gap: 0;
+  }
+  /* Swap to short label on mobile */
+  .nav-btn-text-desktop {
+    display: none;
+  }
+  .nav-btn-text-mobile {
+    display: inline;
+  }
+  .nav-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+  .site-footer {
+    padding: 40px 0 28px;
+    margin-top: 48px;
+  }
+  .footer-content {
+    flex-direction: column;
+    gap: 28px;
+  }
+  .footer-meta {
+    max-width: 100%;
+  }
+  .footer-nav {
+    gap: 32px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

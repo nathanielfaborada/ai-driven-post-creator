@@ -1,0 +1,145 @@
+/* ==========================================================================
+   SUDONATH FLOW // TERMS OF SERVICE STYLES (terms.css)
+   Clean Technical Editorial Document
+   ========================================================================== */
+
+.legal-document {
+  max-width: 860px;
+  margin: 60px auto;
+  padding: 0 24px;
+}
+
+.doc-header {
+  border-bottom: 1px solid var(--border-strong);
+  padding-bottom: 32px;
+  margin-bottom: 40px;
+}
+
+.doc-tag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--amber-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.doc-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.doc-meta {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.legal-section {
+  margin-bottom: 36px;
+}
+
+.legal-section h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sec-num {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--amber-primary);
+}
+
+.legal-section p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+.legal-section ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 16px;
+}
+
+.legal-section li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.legal-section li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--amber-primary);
+  border-radius: 1px;
+}
+
+.legal-callout {
+  background-color: var(--bg-surface-1);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--amber-primary);
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin: 20px 0;
+}
+
+.legal-callout p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+/* Mobile Responsiveness Polish */
+@media (max-width: 768px) {
+  .legal-document {
+    margin: 32px auto;
+    padding: 0 16px;
+  }
+  .doc-header {
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+  }
+  .doc-title {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  .doc-meta {
+    font-size: 0.72rem;
+  }
+  .legal-section {
+    margin-bottom: 28px;
+  }
+  .legal-section h2 {
+    font-size: 1.15rem;
+  }
+  .legal-section p,
+  .legal-section li {
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+  .legal-callout {
+    padding: 12px 14px;
+  }
+  .legal-callout p {
+    font-size: 0.85rem;
+  }
+}

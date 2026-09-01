@@ -5,7 +5,7 @@ const supabaseUrl = config.supabase?.url;
 const supabaseKey = config.supabase?.key;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn("[Supabase Service] ⚠️ Missing SUPABASE_URL or SUPABASE_KEY in configuration!");
+  console.warn("[Supabase Service] [WARN] Missing SUPABASE_URL or SUPABASE_KEY in configuration.");
 }
 
 export const supabase = (supabaseUrl && supabaseKey)
@@ -20,7 +20,7 @@ export const supabase = (supabaseUrl && supabaseKey)
  */
 export async function testSupabaseConnection() {
   if (!supabase) {
-    console.error("[Supabase Service] ❌ Supabase client is not initialized.");
+    console.error("[Supabase Service] [ERROR] Supabase client is not initialized.");
     return false;
   }
 
@@ -29,14 +29,14 @@ export async function testSupabaseConnection() {
     const { error: aError } = await supabase.from("reels_archive").select("id").limit(1);
 
     if (qError || aError) {
-      console.error("[Supabase Service] ⚠️ Supabase connected, but tables may need initialization:", qError?.message || aError?.message);
+      console.error("[Supabase Service] [WARN] Supabase connected, but tables may need initialization:", qError?.message || aError?.message);
       return false;
     }
 
-    console.log("[Supabase Service] ✅ Successfully connected to Supabase database (Tables: reels_queue, reels_archive ready).");
+    console.log("[Supabase Service] [SUCCESS] Successfully connected to Supabase database (Tables: reels_queue, reels_archive ready).");
     return true;
   } catch (err) {
-    console.error("[Supabase Service] ❌ Supabase connection error:", err.message);
+    console.error("[Supabase Service] [ERROR] Supabase connection error:", err.message);
     return false;
   }
 }
@@ -54,7 +54,7 @@ export async function getQueue() {
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("[Supabase Service] Error fetching reels_queue:", error.message);
+      console.error("[Supabase Service] [ERROR] Error fetching reels_queue:", error.message);
       return [];
     }
 
@@ -68,7 +68,7 @@ export async function getQueue() {
       addedAt: item.created_at,
     }));
   } catch (err) {
-    console.error("[Supabase Service] Exception reading queue:", err.message);
+    console.error("[Supabase Service] [ERROR] Exception reading queue:", err.message);
     return [];
   }
 }
@@ -93,12 +93,12 @@ export async function addToQueue({ messageId, fileId, caption = "", fileSize = n
     );
 
     if (error) {
-      console.error("[Supabase Service] Error adding to reels_queue:", error.message);
+      console.error("[Supabase Service] [ERROR] Error adding to reels_queue:", error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.error("[Supabase Service] Exception adding to queue:", err.message);
+    console.error("[Supabase Service] [ERROR] Exception adding to queue:", err.message);
     return false;
   }
 }
@@ -117,12 +117,12 @@ export async function removeFromQueue(messageId) {
       .eq("message_id", messageId);
 
     if (error) {
-      console.error("[Supabase Service] Error removing from reels_queue:", error.message);
+      console.error("[Supabase Service] [ERROR] Error removing from reels_queue:", error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.error("[Supabase Service] Exception removing from queue:", err.message);
+    console.error("[Supabase Service] [ERROR] Exception removing from queue:", err.message);
     return false;
   }
 }
@@ -140,7 +140,7 @@ export async function getArchive() {
       .order("id", { ascending: true });
 
     if (error) {
-      console.error("[Supabase Service] Error fetching reels_archive:", error.message);
+      console.error("[Supabase Service] [ERROR] Error fetching reels_archive:", error.message);
       return [];
     }
 
@@ -155,7 +155,7 @@ export async function getArchive() {
       fbVideoId: item.fb_video_id,
     }));
   } catch (err) {
-    console.error("[Supabase Service] Exception reading archive:", err.message);
+    console.error("[Supabase Service] [ERROR] Exception reading archive:", err.message);
     return [];
   }
 }
@@ -180,12 +180,12 @@ export async function addToArchive({ fileId, category = "General", caption = "",
     );
 
     if (error) {
-      console.error("[Supabase Service] Error saving to reels_archive:", error.message);
+      console.error("[Supabase Service] [ERROR] Error saving to reels_archive:", error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.error("[Supabase Service] Exception saving to archive:", err.message);
+    console.error("[Supabase Service] [ERROR] Exception saving to archive:", err.message);
     return false;
   }
 }
@@ -217,14 +217,14 @@ export async function getRandomArchiveItem(minThresholdPerCategory = 10) {
   for (const [catName, items] of Object.entries(categories)) {
     if (items.length >= minThresholdPerCategory) {
       eligibleItems.push(...items);
-      statusLog.push(`${catName}: ${items.length} items (✅ Qualified >= ${minThresholdPerCategory})`);
+      statusLog.push(`${catName}: ${items.length} items (Qualified >= ${minThresholdPerCategory})`);
     } else {
-      statusLog.push(`${catName}: ${items.length}/${minThresholdPerCategory} items (⏳ Need ${minThresholdPerCategory - items.length} more)`);
+      statusLog.push(`${catName}: ${items.length}/${minThresholdPerCategory} items (Need ${minThresholdPerCategory - items.length} more)`);
     }
   }
 
   if (eligibleItems.length === 0) {
-    console.log(`[Supabase Service] ⏳ Archive Threshold Status:\n  - ${statusLog.join("\n  - ")}\n  No category has reached the minimum ${minThresholdPerCategory} videos yet.`);
+    console.log(`[Supabase Service] [INFO] Archive Threshold Status:\n  - ${statusLog.join("\n  - ")}\n  No category has reached the minimum ${minThresholdPerCategory} videos yet.`);
     return null;
   }
 
@@ -253,7 +253,7 @@ export async function markArchiveItemReposted(fileId) {
       .single();
 
     if (fetchErr) {
-      console.error("[Supabase Service] Error fetching item for repost update:", fetchErr.message);
+      console.error("[Supabase Service] [ERROR] Error fetching item for repost update:", fetchErr.message);
       return false;
     }
 
@@ -269,13 +269,13 @@ export async function markArchiveItemReposted(fileId) {
       .eq("file_id", fileId);
 
     if (updateErr) {
-      console.error("[Supabase Service] Error updating repost count:", updateErr.message);
+      console.error("[Supabase Service] [ERROR] Error updating repost count:", updateErr.message);
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error("[Supabase Service] Exception updating repost count:", err.message);
+    console.error("[Supabase Service] [ERROR] Exception updating repost count:", err.message);
     return false;
   }
 }
@@ -293,10 +293,10 @@ export async function logArchiveStats() {
   }
 
   console.log(`\n=========================================`);
-  console.log(`📊 [Nano Facts 10-Category Evergreen Library]`);
+  console.log(`[Nano Facts 10-Category Evergreen Library Stats]`);
   for (const [catName, count] of Object.entries(categoryCounts)) {
-    console.log(`  📁 ${catName}: ${count} video(s)`);
+    console.log(`  - ${catName}: ${count} video(s)`);
   }
-  console.log(`  📦 Total Evergreen Library: ${archive.length} video(s)`);
+  console.log(`  - Total Evergreen Library: ${archive.length} video(s)`);
   console.log(`=========================================\n`);
 }

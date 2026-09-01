@@ -52,7 +52,7 @@ export async function downloadVideoBuffer(fileId) {
     }
 
     if (fileSize && fileSize > 20 * 1024 * 1024) {
-      console.warn(`[Telegram Service] ⚠️ Video file size (${(fileSize / (1024 * 1024)).toFixed(2)} MB) exceeds Telegram standard bot 20MB limit.`);
+      console.warn(`[Telegram Service] [WARN] Video file size (${(fileSize / (1024 * 1024)).toFixed(2)} MB) exceeds Telegram standard bot 20MB limit.`);
     }
 
     // 2. Download the binary stream
@@ -65,7 +65,7 @@ export async function downloadVideoBuffer(fileId) {
 
     return Buffer.from(downloadRes.data);
   } catch (err) {
-    console.error("[Telegram Service] ❌ Error downloading video:", err.response?.data || err.message);
+    console.error("[Telegram Service] [ERROR] Error downloading video:", err.response?.data || err.message);
     return null;
   }
 }
@@ -95,7 +95,7 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
           message_id: messageId,
         });
       } catch (copyErr) {
-        console.warn(`[Telegram Service] ⚠️ Could not copy message to Telegram archive channel:`, copyErr.response?.data || copyErr.message);
+        console.warn(`[Telegram Service] [WARN] Could not copy message to Telegram archive channel:`, copyErr.response?.data || copyErr.message);
       }
 
       // 3. Delete message from Queue Channel
@@ -106,7 +106,7 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
           message_id: messageId,
         });
       } catch (delErr) {
-        console.warn(`[Telegram Service] ⚠️ Could not delete message from Queue channel (bot may lack delete permissions):`, delErr.response?.data || delErr.message);
+        console.warn(`[Telegram Service] [WARN] Could not delete message from Queue channel:`, delErr.response?.data || delErr.message);
       }
     }
 
@@ -121,10 +121,10 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
       fbVideoId: fbVideoId || null,
     });
 
-    console.log(`[Telegram Service] ✅ Successfully archived reel under category: "${category}" in Supabase.`);
+    console.log(`[Telegram Service] [SUCCESS] Successfully archived reel under category: "${category}" in Supabase.`);
     await logArchiveStats();
   } catch (err) {
-    console.error("[Telegram Service] ⚠️ Error during archive/cleanup:", err.message);
+    console.error("[Telegram Service] [WARN] Error during archive/cleanup:", err.message);
   }
 }
 
@@ -170,7 +170,7 @@ export async function pollTelegramUpdates() {
 
       // 1. Queue Channel (New uploads to be posted FIFO)
       if (targetQueueId && chatId === targetQueueId) {
-        console.log(`\n[Telegram Service] 📥 New Reel detected in Queue Channel (Msg ID: ${messageId})!`);
+        console.log(`\n[Telegram Service] [INFO] New Reel detected in Queue Channel (Msg ID: ${messageId})`);
         const added = await addToQueue({
           messageId,
           fileId,
@@ -180,14 +180,14 @@ export async function pollTelegramUpdates() {
         });
 
         if (added) {
-          console.log(`[Telegram Service] ✅ Saved new Reel to Supabase queue (Msg ID: ${messageId})`);
+          console.log(`[Telegram Service] [SUCCESS] Saved new Reel to Supabase queue (Msg ID: ${messageId})`);
         }
       }
 
       // 2. Direct upload / seeding to any of the 10 Category Archive Channels
       else if (channelToCategory[chatId]) {
         const categoryName = channelToCategory[chatId];
-        console.log(`\n[Telegram Service] 📁 Direct Reel seeded into [${categoryName}] Archive Channel! (File ID: ${fileId.slice(-8)})`);
+        console.log(`\n[Telegram Service] [INFO] Direct Reel seeded into [${categoryName}] Archive Channel (File ID: ${fileId.slice(-8)})`);
         const added = await addToArchive({
           fileId,
           category: categoryName,
@@ -196,16 +196,16 @@ export async function pollTelegramUpdates() {
         });
 
         if (added) {
-          console.log(`[Telegram Service] ✅ Seeded Reel into Supabase archive table under [${categoryName}]!`);
+          console.log(`[Telegram Service] [SUCCESS] Seeded Reel into Supabase archive table under [${categoryName}]`);
         }
       }
     }
   } catch (err) {
     if (err.response?.status === 409) {
-      console.log("[Telegram Service] ℹ️ Deployment handoff detected (409 Conflict). Waiting 5s before reconnecting...");
+      console.log("[Telegram Service] [INFO] Deployment handoff detected (409 Conflict). Waiting 5s before reconnecting...");
       await new Promise((resolve) => setTimeout(resolve, 5000));
     } else if (err.code !== "ECONNABORTED" && err.response?.status !== 408) {
-      console.error("[Telegram Service] Polling error:", err.response?.data || err.message);
+      console.error("[Telegram Service] [ERROR] Polling error:", err.response?.data || err.message);
     }
   }
 }
@@ -217,7 +217,7 @@ export function startTelegramListener() {
   if (isPolling) return;
   isPolling = true;
 
-  console.log("[Telegram Service] 🚀 Telegram Queue & 10-Channel Archive Listener active...");
+  console.log("[Telegram Service] [INFO] Telegram Queue and 10-Channel Archive Listener active.");
 
   const pollLoop = async () => {
     while (isPolling) {
@@ -227,6 +227,6 @@ export function startTelegramListener() {
   };
 
   pollLoop().catch((err) => {
-    console.error("[Telegram Service] Listener encountered fatal error:", err);
+    console.error("[Telegram Service] [ERROR] Listener encountered fatal error:", err);
   });
 }

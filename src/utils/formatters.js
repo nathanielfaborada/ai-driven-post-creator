@@ -34,9 +34,9 @@ export function toUnicodeBold(str) {
   result = result.replace(/__(.+?)__/g, (_, inner) => stringToUnicodeBold(inner));
 
   // 3. Convert specific known header lines if present
-  result = result.replace(/(🎮\s*)(Level Up Your Game)/gi, (_, emoji, text) => `${emoji}${stringToUnicodeBold(text)}`);
-  result = result.replace(/(🔓\s*)(Unlock The Nano Facts Science Library)(\s*🔬📚)?/gi, (_, emoji, text, trailingEmoji) => `${emoji}${stringToUnicodeBold(text)}${trailingEmoji || ""}`);
-  result = result.replace(/(⚛️\s*)(Learn Science in Seconds)/gi, (_, emoji, text) => `${emoji}${stringToUnicodeBold(text)}`);
+  result = result.replace(/(?:^|\n)(Level Up Your Game)/gi, (_, text) => `\n${stringToUnicodeBold(text)}`);
+  result = result.replace(/(?:^|\n)(Unlock The Nano Facts Science Library)/gi, (_, text) => `\n${stringToUnicodeBold(text)}`);
+  result = result.replace(/(?:^|\n)(Learn Science in Seconds)/gi, (_, text) => `\n${stringToUnicodeBold(text)}`);
 
   return result;
 }

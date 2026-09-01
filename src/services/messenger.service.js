@@ -38,7 +38,7 @@ export async function sendSenderAction({ recipientPsid, action = "typing_on", pa
  */
 export async function sendMessengerReply({ recipientPsid, messageText, pageToken }) {
   if (!recipientPsid || !messageText || !pageToken) {
-    console.error("[Messenger] Missing recipientPsid, messageText, or pageToken.");
+    console.error("[Messenger] [ERROR] Missing recipientPsid, messageText, or pageToken.");
     return null;
   }
 
@@ -51,11 +51,11 @@ export async function sendMessengerReply({ recipientPsid, messageText, pageToken
       access_token: pageToken,
     });
 
-    console.log(`[Messenger] ✅ Sent message to PSID ${recipientPsid}! Msg ID:`, res.data?.message_id);
+    console.log(`[Messenger] [SUCCESS] Sent message to PSID ${recipientPsid}. Msg ID:`, res.data?.message_id);
     return res.data?.message_id || null;
   } catch (err) {
     const errorDetails = err.response?.data || err.message;
-    console.error("[Messenger] ❌ Error sending Messenger reply:", errorDetails);
+    console.error("[Messenger] [ERROR] Error sending Messenger reply:", errorDetails);
     return null;
   }
 }

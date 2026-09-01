@@ -25,9 +25,9 @@ if (clientId && clientSecret && refreshToken) {
     auth: oauth2Client,
   });
 
-  console.log("[YouTube Service] 📺 Initialized YouTube Data API v3 OAuth2 Client.");
+  console.log("[YouTube Service] [INFO] Initialized YouTube Data API v3 OAuth2 Client.");
 } else {
-  console.warn("[YouTube Service] ⚠️ Missing YouTube OAuth2 credentials in configuration.");
+  console.warn("[YouTube Service] [WARN] Missing YouTube OAuth2 credentials in configuration.");
 }
 
 /**
@@ -54,7 +54,7 @@ export async function verifyYouTubeConnection() {
     const channelTitle = channel.snippet?.title;
     const customUrl = channel.snippet?.customUrl || `@${channelTitle}`;
 
-    console.log(`[YouTube Service] ✅ Connected to YouTube Channel: "${channelTitle}" (${customUrl})`);
+    console.log(`[YouTube Service] [SUCCESS] Connected to YouTube Channel: "${channelTitle}" (${customUrl})`);
     return {
       success: true,
       channelTitle,
@@ -64,7 +64,7 @@ export async function verifyYouTubeConnection() {
     };
   } catch (err) {
     const errorMsg = err.response?.data?.error?.message || err.message;
-    console.error("[YouTube Service] ❌ Failed to connect to YouTube Channel:", errorMsg);
+    console.error("[YouTube Service] [ERROR] Failed to connect to YouTube Channel:", errorMsg);
     return { success: false, error: errorMsg };
   }
 }
@@ -87,12 +87,12 @@ export async function publishYouTubeShort({
   privacyStatus = "public",
 }) {
   if (!youtube) {
-    console.error("[YouTube Service] Cannot upload video: YouTube client is not initialized.");
+    console.error("[YouTube Service] [ERROR] Cannot upload video: YouTube client is not initialized.");
     return { success: false, videoId: null, error: "YouTube client not initialized" };
   }
 
   if (!videoBuffer || !title) {
-    console.error("[YouTube Service] Missing required params (videoBuffer or title).");
+    console.error("[YouTube Service] [ERROR] Missing required params (videoBuffer or title).");
     return { success: false, videoId: null, error: "Missing videoBuffer or title" };
   }
 
@@ -107,9 +107,9 @@ export async function publishYouTubeShort({
       shortTitle = shortTitle.slice(0, 92).trim() + " #Shorts";
     }
 
-    console.log(`\n[YouTube Shorts] 🚀 Uploading Short to YouTube Channel...`);
-    console.log(`[YouTube Shorts] 📌 Title: "${shortTitle}"`);
-    console.log(`[YouTube Shorts] 📦 Size: ${(videoBuffer.length / (1024 * 1024)).toFixed(2)} MB`);
+    console.log(`\n[YouTube Shorts] [INFO] Uploading Short to YouTube Channel...`);
+    console.log(`[YouTube Shorts] [INFO] Title: "${shortTitle}"`);
+    console.log(`[YouTube Shorts] [INFO] Size: ${(videoBuffer.length / (1024 * 1024)).toFixed(2)} MB`);
 
     const readableStream = new Readable();
     readableStream.push(videoBuffer);
@@ -138,8 +138,8 @@ export async function publishYouTubeShort({
     const videoId = res.data?.id;
     const shortUrl = `https://youtube.com/shorts/${videoId}`;
 
-    console.log(`[YouTube Shorts] ✅ Successfully published YouTube Short! Video ID: ${videoId}`);
-    console.log(`[YouTube Shorts] 🔗 Link: ${shortUrl}`);
+    console.log(`[YouTube Shorts] [SUCCESS] Successfully published YouTube Short. Video ID: ${videoId}`);
+    console.log(`[YouTube Shorts] [INFO] Link: ${shortUrl}`);
 
     return {
       success: true,
@@ -149,7 +149,7 @@ export async function publishYouTubeShort({
     };
   } catch (err) {
     const errorDetails = err.response?.data?.error || err.message;
-    console.error("[YouTube Shorts] ❌ Error publishing to YouTube:", errorDetails);
+    console.error("[YouTube Shorts] [ERROR] Error publishing to YouTube:", errorDetails);
     return {
       success: false,
       videoId: null,

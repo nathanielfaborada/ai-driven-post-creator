@@ -28,7 +28,7 @@ function isMessageProcessed(mid) {
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "online",
-    service: "AI-Driven Facebook & Telegram Automation",
+    service: "AI-Driven Facebook, YouTube & TikTok Automation",
     timestamp: new Date().toISOString(),
   });
 });
@@ -45,10 +45,10 @@ app.get(["/webhook", "/webhooks"], (req, res) => {
   const expectedToken = String(config.facebook?.verifyToken || process.env.FB_VERIFY_TOKEN || "").trim();
 
   if (mode === "subscribe" && String(token || "").trim() === expectedToken) {
-    console.log("[Webhook] ✅ Successfully verified webhook handshake with Meta!");
+    console.log("[Webhook] [SUCCESS] Successfully verified webhook handshake with Meta.");
     return res.status(200).send(challenge);
   } else {
-    console.warn(`[Webhook] ❌ Webhook verification failed. Expected "${expectedToken}", received "${token}".`);
+    console.warn(`[Webhook] [WARN] Webhook verification failed. Expected "${expectedToken}", received "${token}".`);
     return res.sendStatus(403);
   }
 });
@@ -72,7 +72,7 @@ app.post(["/webhook", "/webhooks"], (req, res) => {
     const messagingEvents = entry.messaging || [];
     for (const event of messagingEvents) {
       handleMessagingEvent(event).catch((err) => {
-        console.error("[Webhook] Error handling messaging event:", err.message);
+        console.error("[Webhook] [ERROR] Error handling messaging event:", err.message);
       });
     }
   }
@@ -127,7 +127,7 @@ async function handleMessagingEvent(event) {
     return;
   }
 
-  console.log(`\n[Messenger] 📩 New message on ${pageTitle} from PSID ${senderPsid}: "${userText}"`);
+  console.log(`\n[Messenger] [INFO] New message on ${pageTitle} from PSID ${senderPsid}: "${userText}"`);
 
   // 5. Send "typing..." indicator to Messenger
   await sendSenderAction({
@@ -155,7 +155,7 @@ async function handleMessagingEvent(event) {
     return;
   }
 
-  console.log(`[Messenger] 🤖 AI Response for ${pageTitle}:\n"${aiReply}"`);
+  console.log(`[Messenger] [INFO] AI Response for ${pageTitle}:\n"${aiReply}"`);
 
   // 8. Natural pause of 1.5s for realistic conversation pacing
   await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -174,6 +174,6 @@ async function handleMessagingEvent(event) {
 export function startServer() {
   const port = Number(process.env.PORT) || config.server.port || 8080;
   app.listen(port, "0.0.0.0", () => {
-    console.log(`🌐 Webhook Server is running on port ${port} on 0.0.0.0 (Ready for Meta Webhook requests)`);
+    console.log(`[Server] Webhook Server is running on port ${port} on 0.0.0.0 (Ready for Meta Webhook requests)`);
   });
 }

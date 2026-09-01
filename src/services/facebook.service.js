@@ -15,11 +15,11 @@ const BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
  */
 export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, pageToken }) {
   if (!caption) {
-    console.log("No caption generated, skipping post.");
+    console.log("[Facebook Service] No caption generated, skipping post.");
     return null;
   }
   if (!pageId || !pageToken) {
-    console.error("Missing pageId or pageToken, skipping post.");
+    console.error("[Facebook Service] Missing pageId or pageToken, skipping post.");
     return null;
   }
 
@@ -33,7 +33,7 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
 
       const url = `${BASE_URL}/${pageId}/photos`;
       const res = await axios.post(url, formData);
-      console.log("Posted with Gemini/Imagen image! Post ID:", res.data.id);
+      console.log("[Facebook Service] [SUCCESS] Posted with image. Post ID:", res.data.id);
       return res.data.id;
     } else if (imageUrl) {
       // Post with image URL using Photos API
@@ -43,7 +43,7 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
         message: caption,
         access_token: pageToken,
       });
-      console.log("Posted with image! Post ID:", res.data.id);
+      console.log("[Facebook Service] [SUCCESS] Posted with image. Post ID:", res.data.id);
       return res.data.id;
     } else {
       // Fallback: post text only
@@ -52,11 +52,11 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
         message: caption,
         access_token: pageToken,
       });
-      console.log("Posted (text only)! Post ID:", res.data.id);
+      console.log("[Facebook Service] [SUCCESS] Posted (text only). Post ID:", res.data.id);
       return res.data.id;
     }
   } catch (err) {
-    console.error("Error posting to Facebook:", err.response?.data || err.message);
+    console.error("[Facebook Service] [ERROR] Error posting to Facebook:", err.response?.data || err.message);
     return null;
   }
 }
@@ -71,7 +71,7 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
  */
 export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10 }) {
   if (!pageId || !pageToken) {
-    console.error("Missing pageId or pageToken for fetching comments.");
+    console.error("[Facebook Service] Missing pageId or pageToken for fetching comments.");
     return [];
   }
 
@@ -95,7 +95,7 @@ export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10
       }
     }
   } catch (err) {
-    console.error(`Error fetching feed posts for page ${pageId}:`, err.response?.data || err.message);
+    console.error(`[Facebook Service] Error fetching feed posts for page ${pageId}:`, err.response?.data || err.message);
   }
 
   // 2. Fetch Video / Reels posts (Facebook Reels and uploaded videos)
@@ -119,8 +119,7 @@ export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10
       }
     }
   } catch (err) {
-    // Some pages may not have videos permission or videos yet; log as debug info
-    console.warn(`Note: Could not fetch video reels for page ${pageId}:`, err.response?.data?.error?.message || err.message);
+    console.warn(`[Facebook Service] Note: Could not fetch video reels for page ${pageId}:`, err.response?.data?.error?.message || err.message);
   }
 
   return Array.from(postsMap.values());
@@ -136,7 +135,7 @@ export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10
  */
 export async function replyToComment({ commentId, message, pageToken }) {
   if (!commentId || !message || !pageToken) {
-    console.error("Missing commentId, message, or pageToken for reply.");
+    console.error("[Facebook Service] Missing commentId, message, or pageToken for reply.");
     return null;
   }
 
@@ -146,10 +145,10 @@ export async function replyToComment({ commentId, message, pageToken }) {
       message,
       access_token: pageToken,
     });
-    console.log("Successfully replied to comment! Reply ID:", res.data.id);
+    console.log("[Facebook Service] [SUCCESS] Successfully replied to comment. Reply ID:", res.data.id);
     return res.data.id;
   } catch (err) {
-    console.error("Error replying to comment:", err.response?.data || err.message);
+    console.error("[Facebook Service] [ERROR] Error replying to comment:", err.response?.data || err.message);
     return null;
   }
 }
@@ -165,12 +164,12 @@ export async function replyToComment({ commentId, message, pageToken }) {
  */
 export async function publishFacebookReel({ videoBuffer, caption = "", pageId, pageToken }) {
   if (!videoBuffer || !pageId || !pageToken) {
-    console.error("[FB Reels] Missing required params (videoBuffer, pageId, or pageToken).");
+    console.error("[FB Reels] [ERROR] Missing required params (videoBuffer, pageId, or pageToken).");
     return { success: false, videoId: null, error: "Missing required parameters" };
   }
 
   try {
-    console.log("[FB Reels] Phase 1: Initializing Reels upload session...");
+    console.log("[FB Reels] [INFO] Phase 1: Initializing Reels upload session...");
     const initRes = await axios.post(`${BASE_URL}/${pageId}/video_reels`, {
       upload_phase: "start",
       access_token: pageToken,
@@ -181,7 +180,7 @@ export async function publishFacebookReel({ videoBuffer, caption = "", pageId, p
       throw new Error(`Failed to initialize upload session: ${JSON.stringify(initRes.data)}`);
     }
 
-    console.log(`[FB Reels] Session initialized. Video ID: ${video_id}. Phase 2: Uploading ${videoBuffer.length} bytes...`);
+    console.log(`[FB Reels] [INFO] Session initialized. Video ID: ${video_id}. Phase 2: Uploading ${videoBuffer.length} bytes...`);
     await axios.post(upload_url, videoBuffer, {
       headers: {
         Authorization: `OAuth ${pageToken}`,
@@ -193,7 +192,7 @@ export async function publishFacebookReel({ videoBuffer, caption = "", pageId, p
       maxContentLength: Infinity,
     });
 
-    console.log("[FB Reels] Phase 3: Finishing and publishing Reel...");
+    console.log("[FB Reels] [INFO] Phase 3: Finishing and publishing Reel...");
     const finishRes = await axios.post(`${BASE_URL}/${pageId}/video_reels`, {
       upload_phase: "finish",
       video_id: video_id,
@@ -202,12 +201,11 @@ export async function publishFacebookReel({ videoBuffer, caption = "", pageId, p
       access_token: pageToken,
     });
 
-    console.log(`[FB Reels] ✅ Successfully published Reel! Video ID: ${video_id}`);
+    console.log(`[FB Reels] [SUCCESS] Successfully published Reel. Video ID: ${video_id}`);
     return { success: true, videoId: video_id, data: finishRes.data };
   } catch (err) {
     const errorDetails = err.response?.data || err.message;
-    console.error("[FB Reels] ❌ Error publishing Facebook Reel:", errorDetails);
+    console.error("[FB Reels] [ERROR] Error publishing Facebook Reel:", errorDetails);
     return { success: false, videoId: null, error: errorDetails };
   }
 }
-

@@ -27,9 +27,9 @@ let currentKeyIndex = 0;
 const apiKeys = config.gemini?.apiKeys || [];
 
 if (apiKeys.length === 0) {
-  console.warn("[AI Service] ⚠️ No Gemini API keys found in configuration!");
+  console.warn("[AI Service] [WARN] No Gemini API keys found in configuration.");
 } else {
-  console.log(`[AI Service] 🔑 Initialized Gemini Pool with ${apiKeys.length} API key(s) (Round-Robin, Model Fallback & Auto-Failover Enabled).`);
+  console.log(`[AI Service] [INFO] Initialized Gemini Pool with ${apiKeys.length} API key(s) (Round-Robin, Model Fallback & Auto-Failover Enabled).`);
 }
 
 /**
@@ -47,7 +47,7 @@ export function getKeyPoolStatus() {
 /**
  * Execute Gemini generateContent with:
  * 1. Round-Robin API Key rotation (across 10 keys)
- * 2. Instant Model Fallback on 503 High Demand / Server Spikes (3.6-flash -> 3.5-flash -> 3.5-flash-lite -> flash-lite-latest)
+ * 2. Instant Model Fallback on 503 High Demand / Server Spikes
  * 3. Key Failover on 429 Quota Limits
  * @param {Object} options
  * @param {string} options.contents - The prompt text/contents
@@ -78,7 +78,7 @@ async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
         });
 
         currentKeyIndex = (keyIndex + 1) % apiKeys.length;
-        console.log(`[AI Service] ✅ [${taskName}] Succeeded using model [${currentModel}] on Gemini ${keyLabel}`);
+        console.log(`[AI Service] [SUCCESS] [${taskName}] Completed using model [${currentModel}] on Gemini ${keyLabel}`);
         return response.text?.trim() || "";
       } catch (err) {
         lastError = err;
@@ -90,10 +90,10 @@ async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
           err.message?.includes("NOT_FOUND");
 
         if (isServerDemandError) {
-          console.warn(`[AI Service] ⚠️ [${taskName}] Model [${currentModel}] 503 high demand / unavailable. Fast-failing over to next fallback model...`);
+          console.warn(`[AI Service] [WARN] [${taskName}] Model [${currentModel}] 503 high demand / unavailable. Fast-failing over to next fallback model.`);
           break;
         } else {
-          console.warn(`[AI Service] ⚠️ [${taskName}] Key issue on Gemini ${keyLabel} (${err.message}). Retrying next key...`);
+          console.warn(`[AI Service] [WARN] [${taskName}] Key issue on Gemini ${keyLabel} (${err.message}). Retrying next key.`);
         }
       }
     }
@@ -101,7 +101,7 @@ async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
     modelIdx++;
   }
 
-  throw new Error(`All Gemini models & keys exhausted. Last error: ${lastError?.message}`);
+  throw new Error(`All Gemini models and keys exhausted. Last error: ${lastError?.message}`);
 }
 
 /**
@@ -118,33 +118,32 @@ export async function generateCaptionAstaPlays() {
       HERO: {hero name only}
 
       TITLE:
-      {Hero Name} – {Short catchy subtitle, 4–8 words}
+      {Hero Name} - {Short catchy subtitle, 4-8 words}
 
       CAPTION:
 
-      Did you know {one surprising fact or engaging question about the hero}? 🎮
+      Did you know {one surprising fact or engaging question about the hero}?
 
-      {Write ONLY 2 short sentences (under 200 characters total) describing the hero's role, signature abilities, strengths, or best playstyle. Keep it exciting, motivational, and beginner-friendly. Use only 1–2 relevant emojis.}
+      {Write ONLY 2 short sentences (under 200 characters total) describing the hero's role, signature abilities, strengths, or best playstyle. Keep it exciting, motivational, and beginner-friendly.}
 
-      🎮 Level Up Your Game
-      New Mobile Legends hero spotlights every week!
+      Level Up Your Game
+      New Mobile Legends hero spotlights every week.
 
-      👍 Like, Share & Follow for more MLBB guides and hero spotlights.
+      Like, Share and Follow for more MLBB guides and hero spotlights.
 
-      {10–15 comma-separated SEO keywords including hero name, role, Mobile Legends, MLBB, gameplay, build guide, hero guide, ranked, esports, MOBA, strategy}
+      {10-15 comma-separated SEO keywords including hero name, role, Mobile Legends, MLBB, gameplay, build guide, hero guide, ranked, esports, MOBA, strategy}
 
       Exactly 5 hashtags:
       #MobileLegends #MLBB #MLBBPH #{HeroName} #{HeroRole}
 
       Rules:
       - Return plain text only.
-      - Do NOT include URLs, links, Discord servers, or donation requests.
-      - Keep the entire caption under 350 characters for better Facebook reach.
+      - Do NOT use emojis. Keep text clean and readable.
+      - Do NOT include external URLs, links, Discord servers, or donation requests.
+      - Keep the entire caption concise and under 350 characters for strong reach.
       - The first sentence must be a strong hook starting with "Did you know".
-      - Use simple English that anyone can understand.
+      - Use simple, accessible English.
       - Information must be accurate based on the latest Mobile Legends hero lore and gameplay.
-      - Use only 2–3 emojis total.
-      - Do not mention skins unless they are relevant to the hero's identity.
       - Follow the exact formatting and line breaks shown above.
       `,
     });
@@ -163,7 +162,7 @@ export async function generateCaptionAstaPlays() {
 
     return { heroName, caption };
   } catch (err) {
-    console.error("Error generating Asta Plays caption:", err.message);
+    console.error("[AI Service] [ERROR] Error generating Asta Plays caption:", err.message);
     return { heroName: null, caption: null };
   }
 }
@@ -192,29 +191,30 @@ export async function generateCaptionNanoFacts() {
       TOPIC: {topic name only}
 
       TITLE:
-      {Topic Name} – {Short catchy subtitle, 4–8 words}
+      {Topic Name} - {Short catchy subtitle, 4-8 words}
 
       CAPTION:
 
-      Did you know {one mind-blowing fact or engaging hook question about the topic}? {1 relevant emoji}
+      Did you know {one mind-blowing fact or engaging hook question about the topic}?
 
-      {Write ONLY 2 short, fascinating sentences explaining how it works, why it matters, or its futuristic impact. Make it educational, exciting, and accessible to anyone. Use 1–2 emojis.}
+      {Write ONLY 2 short, fascinating sentences explaining how it works, why it matters, or its futuristic impact. Make it educational, exciting, and accessible to anyone.}
 
-      🔓 Unlock The Nano Facts Science Library 🔬📚
-      Love learning? Help us unlock exclusive Science E-Books, Physics & Chemistry Study Guides, Biology materials, and downloadable PDF resources!
+      Unlock The Nano Facts Science Library
+      Love learning? Help us unlock exclusive Science E-Books, Physics & Chemistry Study Guides, Biology materials, and downloadable PDF resources.
 
-      🌟 Support our page & become a Subscriber:
-      👉 https://www.facebook.com/nanoscie/subscribe/
+      Support our page & become a Subscriber:
+      https://www.facebook.com/nanoscie/subscribe/
 
-      👇 Comment below: What science topic should be included in our next exclusive study guide?
+      Comment below: What science topic should be included in our next exclusive study guide?
 
-      {10–15 comma-separated SEO keywords directly related to this topic, field of science, technology, research, discovery, education, STEM}
+      {10-15 comma-separated SEO keywords directly related to this topic, field of science, technology, research, discovery, education, STEM}
 
       Exactly 5 hashtags matching the topic:
       #Science #Technology #NanoFacts #STEM #{TopicOrField}
 
       Rules:
       - The first sentence must be a strong hook starting with "Did you know".
+      - Do NOT use emojis. Clean and readable plain text only.
       - Facts must be scientifically accurate and up-to-date.
       - Keep sentences punchy and engaging.
       - Follow the exact formatting and line breaks shown above.
@@ -235,7 +235,7 @@ export async function generateCaptionNanoFacts() {
 
     return { topicName, elementName: topicName, caption };
   } catch (err) {
-    console.error("Error generating Nano Facts caption:", err.message);
+    console.error("[AI Service] [ERROR] Error generating Nano Facts caption:", err.message);
     return { topicName: null, elementName: null, caption: null };
   }
 }
@@ -326,29 +326,30 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
       TOPIC: {topic name only}
 
       TITLE:
-      {Topic Name} – {Short catchy subtitle, 4–8 words}
+      {Topic Name} - {Short catchy subtitle, 4-8 words}
 
       CAPTION:
 
-      Did you know {one mind-blowing fact or engaging hook question about the topic}? {1 relevant emoji}
+      Did you know {one mind-blowing fact or engaging hook question about the topic}?
 
-      {Write ONLY 2 short, fascinating sentences explaining how it works, why it matters, or its futuristic impact. Make it educational, exciting, and accessible to anyone. Use 1–2 emojis.}
+      {Write ONLY 2 short, fascinating sentences explaining how it works, why it matters, or its futuristic impact. Make it educational, exciting, and accessible to anyone.}
 
-      🔓 Unlock The Nano Facts Science Library 🔬📚
-      Love learning? Help us unlock exclusive Science E-Books, Physics & Chemistry Study Guides, Biology materials, and downloadable PDF resources!
+      Unlock The Nano Facts Science Library
+      Love learning? Help us unlock exclusive Science E-Books, Physics & Chemistry Study Guides, Biology materials, and downloadable PDF resources.
 
-      🌟 Support our page & become a Subscriber:
-      👉 https://www.facebook.com/nanoscie/subscribe/
+      Support our page & become a Subscriber:
+      https://www.facebook.com/nanoscie/subscribe/
 
-      👇 Comment below: What science topic should be included in our next exclusive study guide?
+      Comment below: What science topic should be included in our next exclusive study guide?
 
-      {10–15 comma-separated SEO keywords directly related to this topic, field of science, technology, research, discovery, education, STEM}
+      {10-15 comma-separated SEO keywords directly related to this topic, field of science, technology, research, discovery, education, STEM}
 
       Exactly 5 hashtags matching the topic:
       #Science #Technology #NanoFacts #STEM #{TopicOrField}
 
       Rules:
       - The first sentence must be a strong hook starting with "Did you know".
+      - Do NOT use emojis. Clean and readable plain text only.
       - Facts must be scientifically accurate and up-to-date.
       - Keep sentences punchy and engaging for short-form video viewers.
       - Follow the exact formatting and line breaks shown above.
@@ -371,7 +372,7 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
 
     return { topicName, rawTitle, caption, category };
   } catch (err) {
-    console.error("Error generating Nano Facts Reel caption:", err.message);
+    console.error("[AI Service] [ERROR] Error generating Nano Facts Reel caption:", err.message);
     const fallbackCategory = await classifyReelCategory(initialTopic || "");
     return {
       topicName: initialTopic || null,
@@ -395,16 +396,16 @@ export function generateYouTubeShortsMetadata({ topicName = "Science Fact", cate
   const baseTitle = rawTitle || topicName || "Mind-Blowing Science Discovery";
 
   // Format Title under 90 chars ending with #Shorts
-  let title = `${baseTitle} 🔬 #Shorts`;
+  let title = `${baseTitle} #Shorts`;
   if (title.length > 95) {
     title = `${baseTitle.slice(0, 80).trim()}... #Shorts`;
   }
 
-  const description = `${baseTitle} 🌌
+  const description = `${baseTitle}
 
 Did you know this fascinating science discovery about ${topicName || "our universe"}?
 
-Subscribe to our channel for more daily science, physics, biology & space facts! 🔬📚
+Subscribe to our channel for more daily science, physics, biology and space facts.
 
 #Shorts #Science #Technology #NanoFacts #${cleanCategory} #STEM #Educational`;
 
@@ -450,7 +451,7 @@ export async function generateCommentReply({ userComment, postTopic = "our Faceb
       - Reply in natural, casual, and friendly English ONLY (do not use Tagalog or Taglish).
       - Keep it short, engaging, and conversational (1-2 sentences).
       ${userName ? `- If natural, greet them briefly by their first name (e.g., "Thanks, John!" or "Hey Sarah,").` : ""}
-      - Include 1 relevant emoji.
+      - Do NOT use emojis. Clean and readable plain text only.
       - Do not include external links or spam.
       - Return plain text only.
       `,
@@ -458,7 +459,7 @@ export async function generateCommentReply({ userComment, postTopic = "our Faceb
 
     return reply || null;
   } catch (err) {
-    console.error("Error generating comment reply:", err.message);
+    console.error("[AI Service] [ERROR] Error generating comment reply:", err.message);
     return null;
   }
 }
@@ -489,14 +490,14 @@ export async function generateMessengerChatReply({ userMessage, page = "astaPlay
       - Respond in natural, friendly, and conversational English ONLY (do not use Tagalog/Taglish unless they explicitly speak Tagalog, but keep English preferred).
       - Keep your reply concise (1 to 3 short sentences) since this is a private chat.
       - Be direct and answer their question or acknowledge their message warmly.
-      - Use 1–2 relevant emojis.
+      - Do NOT use emojis. Clean and readable text only.
       - Return plain text only without markdown asterisks or special headers.
       `,
     });
 
     return reply || null;
   } catch (err) {
-    console.error("[AI Service] Error generating Messenger chat reply:", err.message);
+    console.error("[AI Service] [ERROR] Error generating Messenger chat reply:", err.message);
     return null;
   }
 }

@@ -6,11 +6,11 @@ async function test() {
   console.log("Testing TikTok Connection...");
   const token = await getTikTokAccessToken();
   if (!token) {
-    console.error("❌ Failed to get TikTok access token.");
+    console.error("[ERROR] Failed to get TikTok access token.");
     process.exit(1);
   }
 
-  console.log("✅ Got TikTok Access Token:", token.slice(0, 15) + "...");
+  console.log("[SUCCESS] Got TikTok Access Token:", token.slice(0, 15) + "...");
 
   try {
     const res = await axios.get("https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name", {

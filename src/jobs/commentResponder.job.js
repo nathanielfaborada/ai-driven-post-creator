@@ -83,12 +83,12 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
           }
         }
 
-        console.log(`\n[Comment Responder] 💬 New comment on ${pageTitle} by ${comment.from?.name || "User"}: "${commentMessage}"`);
+        console.log(`\n[Comment Responder] [INFO] New comment on ${pageTitle} by ${comment.from?.name || "User"}: "${commentMessage}"`);
 
         // Human-paced natural delay before posting the reply (40 - 75 seconds)
         const delayMs = getRandomDelay(40, 75);
         const delaySec = Math.round(delayMs / 1000);
-        console.log(`[Comment Responder] ⏳ Waiting ${delaySec}s before replying to maintain natural human pacing...`);
+        console.log(`[Comment Responder] [INFO] Waiting ${delaySec}s before replying to maintain natural human pacing...`);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
 
         // 6. Generate AI response
@@ -111,11 +111,11 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
 
           if (replyId) {
             markCommentAsReplied(commentId);
-            console.log(`[${pageTitle}] ✅ Reply sent successfully to ${comment.from?.name || "User"}!`);
+            console.log(`[${pageTitle}] [SUCCESS] Reply sent successfully to ${comment.from?.name || "User"}.`);
           }
         }
       } catch (commentErr) {
-        console.error(`[${pageTitle}] Error processing comment ${comment?.id}:`, commentErr.message);
+        console.error(`[${pageTitle}] [ERROR] Error processing comment ${comment?.id}:`, commentErr.message);
       }
     }
   }

@@ -49,10 +49,10 @@ export async function getTikTokAccessToken() {
       return cachedAccessToken;
     }
 
-    console.error("[TikTok Service] ❌ Failed to refresh token:", res.data);
+    console.error("[TikTok Service] [ERROR] Failed to refresh token:", res.data);
     return null;
   } catch (err) {
-    console.error("[TikTok Service] ❌ Token refresh error:", err.response?.data || err.message);
+    console.error("[TikTok Service] [ERROR] Token refresh error:", err.response?.data || err.message);
     return null;
   }
 }
@@ -72,17 +72,17 @@ export async function publishTikTokVideo({
 }) {
   const accessToken = await getTikTokAccessToken();
   if (!accessToken) {
-    console.error("[TikTok Service] Cannot publish: Missing or invalid TikTok access token.");
+    console.error("[TikTok Service] [ERROR] Cannot publish: Missing or invalid TikTok access token.");
     return { success: false, error: "Missing or invalid TikTok access token" };
   }
 
   if (!videoBuffer || !title) {
-    console.error("[TikTok Service] Missing required params (videoBuffer or title).");
+    console.error("[TikTok Service] [ERROR] Missing required params (videoBuffer or title).");
     return { success: false, error: "Missing videoBuffer or title" };
   }
 
   try {
-    console.log(`\n[TikTok Video] 🚀 Phase 1: Initializing TikTok upload session (${(videoBuffer.length / (1024 * 1024)).toFixed(2)} MB)...`);
+    console.log(`\n[TikTok Video] [INFO] Phase 1: Initializing TikTok upload session (${(videoBuffer.length / (1024 * 1024)).toFixed(2)} MB)...`);
 
     // Clean caption and ensure trending hashtags
     let cleanCaption = title.trim();
@@ -126,7 +126,7 @@ export async function publishTikTokVideo({
     }
 
     // 2. Upload Video Binary Chunk
-    console.log(`[TikTok Video] 📦 Phase 2: Transferring video binary (${videoBuffer.length} bytes)...`);
+    console.log(`[TikTok Video] [INFO] Phase 2: Transferring video binary (${videoBuffer.length} bytes)...`);
     await axios.put(uploadUrl, videoBuffer, {
       headers: {
         "Content-Type": "video/mp4",
@@ -136,7 +136,7 @@ export async function publishTikTokVideo({
       maxContentLength: Infinity,
     });
 
-    console.log(`[TikTok Video] ✅ Successfully uploaded to TikTok! (Publish ID: ${publishId})`);
+    console.log(`[TikTok Video] [SUCCESS] Successfully uploaded to TikTok. Publish ID: ${publishId}`);
     return {
       success: true,
       publishId,
@@ -144,7 +144,7 @@ export async function publishTikTokVideo({
     };
   } catch (err) {
     const errorDetails = err.response?.data || err.message;
-    console.error("[TikTok Video] ❌ Error publishing to TikTok:", errorDetails);
+    console.error("[TikTok Video] [ERROR] Error publishing to TikTok:", errorDetails);
     return {
       success: false,
       error: errorDetails,

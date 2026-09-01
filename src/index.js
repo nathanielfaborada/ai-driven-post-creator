@@ -10,7 +10,7 @@ import { getTikTokAccessToken } from "./services/tiktok.service.js";
 // import { startServer } from "./server.js";
 
 console.log("=========================================================");
-console.log("🤖 AI-Driven Facebook, YouTube & TikTok Started 24/7");
+console.log("[Engine] AI-Driven Facebook, YouTube and TikTok Engine Started 24/7");
 console.log("=========================================================");
 
 // Handle global unhandled errors to keep server alive 24/7
@@ -25,27 +25,27 @@ process.on("uncaughtException", (err) => {
 // Test Supabase Database Connection
 testSupabaseConnection().then((connected) => {
   if (connected) {
-    console.log("[Boot] 📦 Supabase database active for Reels Queue & Evergreen Archive.");
+    console.log("[Boot] [INFO] Supabase database active for Reels Queue and Evergreen Archive.");
   } else {
-    console.warn("[Boot] ⚠️ Supabase not yet initialized. Please run the SQL schema in Supabase SQL Editor.");
+    console.warn("[Boot] [WARN] Supabase not yet initialized. Please run the SQL schema in Supabase SQL Editor.");
   }
 });
 
 // Test YouTube Channel Connection
 verifyYouTubeConnection().then((yt) => {
   if (yt.success) {
-    console.log(`[Boot] 📺 YouTube Shorts Channel Connected: "${yt.channelTitle}" (${yt.customUrl})`);
+    console.log(`[Boot] [INFO] YouTube Shorts Channel Connected: "${yt.channelTitle}" (${yt.customUrl})`);
   } else {
-    console.warn("[Boot] ⚠️ YouTube Channel connection check:", yt.error);
+    console.warn("[Boot] [WARN] YouTube Channel connection check:", yt.error);
   }
 });
 
 // Test TikTok Connection
 getTikTokAccessToken().then((token) => {
   if (token) {
-    console.log("[Boot] 🎵 TikTok Account Connected & Authorized for Video Publishing.");
+    console.log("[Boot] [INFO] TikTok Account Connected and Authorized for Video Publishing.");
   } else {
-    console.warn("[Boot] ⚠️ TikTok credentials not fully configured.");
+    console.warn("[Boot] [WARN] TikTok credentials not fully configured.");
   }
 });
 

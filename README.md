@@ -225,38 +225,41 @@ stateDiagram-v2
 ```
 
 #### Logic 3.3: 3-Way Video Binary Chunk Upload Lifecycle
-* **Telegram:** Downloads video binary stream via `GET /file/bot{token}/{file_path}` (validates 20MB limit).
-* **Facebook Reels:** 3-phase upload (`start` session -> upload binary bytes -> `finish` & publish).
-* **YouTube Shorts:** Streams buffer via `stream.PassThrough` to `youtube.videos.insert` with category 28 (Science & Tech).
-* **TikTok Videos:** 2-phase upload (`/v2/post/publish/video/init/` -> binary `PUT` with `Content-Range` header).
+
+* **Telegram Stream Ingestion:** Downloads raw MP4 video buffer directly via `GET /file/bot{token}/{file_path}` while validating Telegram's 20MB bot limit.
+* **Track A - Facebook Reels (3-Phase Protocol):** 
+  1. `POST /{pageId}/video_reels` with `upload_phase: "start"` to generate `upload_url` and `video_id`.
+  2. `POST {upload_url}` to stream binary video bytes.
+  3. `POST /{pageId}/video_reels` with `upload_phase: "finish"` and caption to publish.
+* **Track B - YouTube Shorts (Resumable Stream Protocol):** 
+  1. Wraps binary buffer in `stream.PassThrough()`.
+  2. Executes `youtube.videos.insert` with category 28 (Science & Technology), privacy "public", and `#Shorts` tag.
+* **Track C - TikTok Direct Post (2-Phase Protocol):** 
+  1. `POST /v2/post/publish/video/init/` with `source: "FILE_UPLOAD"` to obtain `upload_url` and `publish_id`.
+  2. `PUT {upload_url}` with `Content-Range: bytes 0-{size-1}/{size}` header to transfer chunks.
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    participant Job as Reels Publisher Worker
-    participant TG as Telegram Bot API
-    participant FB as Facebook Graph API
-    participant YT as YouTube Data API
-    participant TT as TikTok Content API
+flowchart TD
+    StartBuffer["1. Ingest Video Buffer from Telegram Bot API\n(Validate 20MB bot limit)"] --> ForkParallel{"Parallel Triple Dispatch"}
 
-    Job->>TG: GET /getFile + Download Binary Buffer
-    TG-->>Job: Video Buffer (MP4 Stream)
-
-    par 1. Facebook Reels
-        Job->>FB: POST /{pageId}/video_reels (upload_phase: start)
-        FB-->>Job: upload_url & video_id
-        Job->>FB: POST upload_url (Binary bytes)
-        Job->>FB: POST /{pageId}/video_reels (upload_phase: finish)
-        FB-->>Job: Published (video_id)
-    and 2. YouTube Shorts
-        Job->>YT: POST /videos.insert (Stream PassThrough + #Shorts)
-        YT-->>Job: Published (videoId)
-    and 3. TikTok Video
-        Job->>TT: POST /v2/post/publish/video/init/ (FILE_UPLOAD)
-        TT-->>Job: upload_url & publish_id
-        Job->>TT: PUT upload_url (Content-Range binary bytes)
-        TT-->>Job: Uploaded (publishId)
+    subgraph Track_FB["Track A: Facebook Reels (3-Phase Protocol)"]
+        FB1["Phase 1: POST /{pageId}/video_reels\n(upload_phase: start)"] --> FB2["Phase 2: POST upload_url\n(Transfer binary video bytes)"]
+        FB2 --> FB3["Phase 3: POST /{pageId}/video_reels\n(upload_phase: finish & publish)"]
     end
+
+    subgraph Track_YT["Track B: YouTube Shorts (Resumable Stream)"]
+        YT1["Create stream.PassThrough(videoBuffer)"] --> YT2["POST /videos.insert (YouTube Data API v3)\n(Category 28: Science & Tech + #Shorts)"]
+    end
+
+    subgraph Track_TT["Track C: TikTok Direct Post (2-Phase Protocol)"]
+        TT1["Phase 1: POST /v2/post/publish/video/init/\n(Initialize session & get upload_url)"] --> TT2["Phase 2: PUT upload_url\n(Stream bytes with Content-Range)"]
+    end
+
+    ForkParallel --> Track_FB
+    ForkParallel --> Track_YT
+    ForkParallel --> Track_TT
+
+    Track_FB & Track_YT & Track_TT --> SyncDone["Consolidate Publish IDs (FB Video ID, YT ID, TikTok Publish ID)\n& Proceed to Telegram Archive Cleanup"]
 ```
 
 ---

@@ -9,16 +9,17 @@ import {
 } from "../services/telegram.service.js";
 import { publishFacebookReel } from "../services/facebook.service.js";
 import { publishYouTubeShort } from "../services/youtube.service.js";
+import { publishTikTokVideo } from "../services/tiktok.service.js";
 import { generateReelCaptionNanoFacts, generateYouTubeShortsMetadata } from "../services/ai.service.js";
 import { toUnicodeBold } from "../utils/formatters.js";
 
 /**
- * Execute the Facebook Reels & YouTube Shorts cross-posting pipeline.
+ * Execute the Facebook Reels, YouTube Shorts & TikTok triple cross-posting pipeline.
  */
 export async function runReelsPublisherJob() {
-  console.log("\n=========================================");
-  console.log("[Reels Publisher] 🎬 Starting Multi-Platform Reels Posting Workflow...");
-  console.log("=========================================");
+  console.log("\n========================================================");
+  console.log("[Reels Publisher] 🎬 Starting Multi-Platform (FB + YT + TikTok) Workflow...");
+  console.log("========================================================");
 
   await logArchiveStats();
 
@@ -72,12 +73,22 @@ export async function runReelsPublisherJob() {
       });
     }
 
-    if (fbRes.success || ytRes.success) {
-      console.log(`[Reels Publisher] ✅ Published! (FB Video ID: ${fbRes.videoId || "N/A"} | YT Video ID: ${ytRes.videoId || "N/A"})`);
+    // 3. Cross-post to TikTok
+    let ttRes = { success: false, publishId: null };
+    if (config.tiktok?.clientKey && config.tiktok?.refreshToken) {
+      console.log(`[Reels Publisher] 🎵 Cross-posting to TikTok: "${topicName || "Science Fact"}"...`);
+      ttRes = await publishTikTokVideo({
+        videoBuffer,
+        title: `${rawTitle || topicName || "Science Discovery"} #ScienceTok #NanoFacts #fyp #STEM`,
+      });
+    }
+
+    if (fbRes.success || ytRes.success || ttRes.success) {
+      console.log(`[Reels Publisher] ✅ Published! (FB: ${fbRes.videoId || "N/A"} | YT: ${ytRes.videoId || "N/A"} | TikTok: ${ttRes.publishId || "N/A"})`);
       console.log(`[Reels Publisher] 📦 Archiving to [${category}] Archive Channel & cleaning up Channel 1...`);
-      await archiveAndCleanupReel(nextItem, fbRes.videoId || ytRes.videoId, category);
+      await archiveAndCleanupReel(nextItem, fbRes.videoId || ytRes.videoId || ttRes.publishId, category);
     } else {
-      console.error("[Reels Publisher] ❌ Publishing failed. Message kept in queue for retry.", fbRes.error || ytRes.error);
+      console.error("[Reels Publisher] ❌ Publishing failed across all platforms. Message kept in queue for retry.");
     }
   } else {
     // 2. Fallback: Queue is empty -> Pick from Archive (Requires at least 10 videos per category)
@@ -131,11 +142,21 @@ export async function runReelsPublisherJob() {
       });
     }
 
-    if (fbRes.success || ytRes.success) {
-      console.log(`[Reels Publisher] ✅ Successfully reposted archived reel! (FB Video ID: ${fbRes.videoId || "N/A"} | YT Video ID: ${ytRes.videoId || "N/A"})`);
+    // 3. Cross-post to TikTok
+    let ttRes = { success: false, publishId: null };
+    if (config.tiktok?.clientKey && config.tiktok?.refreshToken) {
+      console.log(`[Reels Publisher] 🎵 Reposting to TikTok: "${topicName || "Science Fact"}"...`);
+      ttRes = await publishTikTokVideo({
+        videoBuffer,
+        title: `${rawTitle || topicName || "Science Discovery"} #ScienceTok #NanoFacts #fyp #STEM`,
+      });
+    }
+
+    if (fbRes.success || ytRes.success || ttRes.success) {
+      console.log(`[Reels Publisher] ✅ Successfully reposted archived reel! (FB: ${fbRes.videoId || "N/A"} | YT: ${ytRes.videoId || "N/A"} | TikTok: ${ttRes.publishId || "N/A"})`);
       await markArchiveItemReposted(archiveItem.fileId);
     } else {
-      console.error("[Reels Publisher] ❌ Reposting failed:", fbRes.error || ytRes.error);
+      console.error("[Reels Publisher] ❌ Reposting failed across all platforms.");
     }
   }
 }

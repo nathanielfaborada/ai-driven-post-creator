@@ -1,15 +1,17 @@
-# Facebook, YouTube & Telegram AI-Driven Automation Engine
+# Facebook, YouTube & TikTok AI-Driven Automation Engine
 
-A production-grade multi-platform automation backend built with Node.js that powers 24/7 scheduled content creation, multi-channel Telegram video reels publishing, **Facebook Reels & YouTube Shorts Cross-Posting**, intelligent comment auto-responding, and 10-category evergreen content recycling across multiple platforms.
+A production-grade multi-platform automation backend built with Node.js that powers 24/7 scheduled content creation, multi-channel Telegram video reels ingestion, **Facebook Reels, YouTube Shorts & TikTok Triple Cross-Posting**, intelligent comment auto-responding, and 10-category evergreen content recycling.
 
 ---
 
-## 🌟 Managed Facebook Pages & Channels
+## 🌟 Managed Social Channels & Pages
 
 * **Nano Facts** — Science, Deep Space & Technology Page
   * Facebook Page: [facebook.com/nanoscie](https://www.facebook.com/nanoscie)
   * YouTube Channel: [youtube.com/@nielskysgamingtv1835](https://www.youtube.com/@nielskysgamingtv1835)
+  * TikTok Account: [tiktok.com/@nanoscie](https://www.tiktok.com/@nanoscie)
   * Subscription Hub: [facebook.com/nanoscie/subscribe](https://www.facebook.com/nanoscie/subscribe/)
+  * Portal & Legal: [nanofacts-automation.netlify.app](https://nanofacts-automation.netlify.app/)
 * **Asta Plays** — Mobile Legends: Bang Bang (MLBB) Gaming Page
   * Facebook Page: [facebook.com/astaplasys05](https://www.facebook.com/astaplasys05)
 
@@ -19,7 +21,7 @@ A production-grade multi-platform automation backend built with Node.js that pow
 
 ```mermaid
 flowchart TD
-    subgraph Telegram_Inlet["Telegram Ingestion & 10-Channel Archiving"]
+    subgraph Telegram_Inlet["Telegram Ingestion & 10-Category Archiving"]
         CreatorUpload["Creator drops video"] --> ChQueue["Channel 1: FB Reels to Post (Queue)"]
         SeedBio["Seed 20 Biology Reels"] --> Ch1["Channel: Human Biology & Anatomy"]
         SeedChem["Seed 20 Chemistry Reels"] --> Ch2["Channel: Chemistry & Periodic Table"]
@@ -35,21 +37,22 @@ flowchart TD
     end
 
     subgraph Core_Engine["Automation Schedulers & Workers"]
-        CronSched["node-schedule"] --> ReelsWorker["Reels & Shorts Publisher Worker\n(Every 4 Hours + Startup)"]
+        CronSched["node-schedule"] --> ReelsWorker["Triple Cross-Posting Worker\n(Every 4 Hours + Startup)"]
         CronSched --> TextWorker["Text Content Worker\n(Every 5 Hours + Startup)"]
         CronSched --> CommentWorker["Comment Responder Worker\n(Fast Polling Every 2m)"]
     end
 
     subgraph AI_Intelligence["Google Gemini AI Pool"]
-        ReelsWorker -->|Expand Caption & Classify| GeminiReels["Gemini 3.6 Flash / 3.5 Flash\n(Caption & 10-Category Router)"]
+        ReelsWorker -->|Expand Caption & Classify| GeminiReels["Gemini 3.6 Flash / 3.5 Flash\n(FB Caption & 10-Category Router)"]
         ReelsWorker -->|Generate YouTube SEO Metadata| GeminiYT["Gemini 3.6 Flash\n(Shorts Title, Description, Tags)"]
         TextWorker -->|Generate Science & Gaming Posts| GeminiText["Gemini 3.6 Flash\n(Post Creator)"]
         CommentWorker -->|Generate Contextual Reply| GeminiComment["Gemini 3.6 Flash\n(Persona Responder)"]
     end
 
-    subgraph Social_Platforms["Multi-Platform Social Distribution"]
-        ReelsWorker -->|1. Publish Facebook Reel (v26.0)| FBReelsAPI["Facebook: /{pageId}/video_reels"]
-        ReelsWorker -->|2. Cross-Post YouTube Short (v3)| YTShortsAPI["YouTube: /videos.insert (Shorts)"]
+    subgraph Social_Platforms["Triple-Platform Social Distribution"]
+        ReelsWorker -->|1. Publish Facebook Reel| FBReelsAPI["Facebook: /{pageId}/video_reels"]
+        ReelsWorker -->|2. Cross-Post YouTube Short| YTShortsAPI["YouTube: /videos.insert (Shorts)"]
+        ReelsWorker -->|3. Cross-Post TikTok Video| TTApi["TikTok: /v2/post/publish/video/init/"]
         TextWorker -->|Publish Feed Post| FBFeedAPI["Facebook: /{pageId}/feed"]
         CommentWorker -->|Post Sub-Comment Reply| FBCommentAPI["Facebook: /{commentId}/comments"]
     end
@@ -63,7 +66,7 @@ flowchart TD
 
 ## 🗄️ Supabase Database Setup
 
-Run this SQL script in your **Supabase Dashboard > SQL Editor** to create the tables:
+Run this SQL script in your **Supabase Dashboard > SQL Editor**:
 
 ```sql
 -- 1. Table para sa Pending Telegram Queue (FIFO)
@@ -115,17 +118,17 @@ CREATE INDEX IF NOT EXISTS idx_reels_archive_repost ON reels_archive(repost_coun
 
 ## ⏰ 24-Hour Schedule Matrix
 
-| Time | Facebook Reels & YouTube Shorts | Nano Facts (Science Post) | Asta Plays (MLBB Post) |
+| Time | Facebook Reels + YouTube Shorts + TikTok | Nano Facts (Science Post) | Asta Plays (MLBB Post) |
 | :---: | :---: | :---: | :---: |
-| **12:00 AM** | 🎬 Cross-Post Reel & Short | — | — |
+| **12:00 AM** | 🎬 Cross-Post 3 Platforms | — | — |
 | **1:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **4:00 AM** | 🎬 Cross-Post Reel & Short | — | — |
+| **4:00 AM** | 🎬 Cross-Post 3 Platforms | — | — |
 | **6:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **8:00 AM** | 🎬 Cross-Post Reel & Short | — | — |
+| **8:00 AM** | 🎬 Cross-Post 3 Platforms | — | — |
 | **11:00 AM** | — | 🔬 Publish Post | 🎮 Publish Post |
-| **12:00 PM** | 🎬 Cross-Post Reel & Short | — | — |
-| **4:00 PM** | 🎬 Cross-Post Reel & Short | 🔬 Publish Post | 🎮 Publish Post |
-| **8:00 PM** | 🎬 Cross-Post Reel & Short | — | — |
+| **12:00 PM** | 🎬 Cross-Post 3 Platforms | — | — |
+| **4:00 PM** | 🎬 Cross-Post 3 Platforms | 🔬 Publish Post | 🎮 Publish Post |
+| **8:00 PM** | 🎬 Cross-Post 3 Platforms | — | — |
 | **9:00 PM** | — | 🔬 Publish Post | 🎮 Publish Post |
 
 ---
@@ -142,6 +145,10 @@ CREATE INDEX IF NOT EXISTS idx_reels_archive_repost ON reels_archive(repost_coun
 | `YOUTUBE_CLIENT_ID` | Google Cloud OAuth2 Client ID |
 | `YOUTUBE_CLIENT_SECRET` | Google Cloud OAuth2 Client Secret |
 | `YOUTUBE_REFRESH_TOKEN` | Google OAuth2 Refresh Token for YouTube |
+| `TIKTOK_CLIENT_KEY` | TikTok Content Posting API Client Key |
+| `TIKTOK_CLIENT_SECRET` | TikTok Content Posting API Client Secret |
+| `TIKTOK_REFRESH_TOKEN` | TikTok OAuth2 Refresh Token (1 Year Expiry) |
+| `TIKTOK_OPEN_ID` | TikTok Open ID for `@nanoscie` |
 | `TELEGRAM_BOT_TOKEN` | Bot API Token from `@BotFather` |
 | `TELEGRAM_CHANNEL_QUEUE_ID` | Telegram Channel 1 ID (`FB Reels to Post`) |
 | `TG_CHANNEL_BIOLOGY_ID` ... `_ROCKETS_ID` | 10 Telegram Category Archive Channels |

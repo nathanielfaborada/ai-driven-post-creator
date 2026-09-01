@@ -6,11 +6,12 @@ import { runReelsPublisherJob } from "./jobs/reelsPublisher.job.js";
 import { startTelegramListener } from "./services/telegram.service.js";
 import { testSupabaseConnection } from "./services/supabase.service.js";
 import { verifyYouTubeConnection } from "./services/youtube.service.js";
+import { getTikTokAccessToken } from "./services/tiktok.service.js";
 // import { startServer } from "./server.js";
 
-console.log("==================================================");
-console.log("🤖 AI-Driven Facebook, YouTube & Telegram Started");
-console.log("==================================================");
+console.log("=========================================================");
+console.log("🤖 AI-Driven Facebook, YouTube & TikTok Started 24/7");
+console.log("=========================================================");
 
 // Handle global unhandled errors to keep server alive 24/7
 process.on("unhandledRejection", (reason) => {
@@ -39,6 +40,15 @@ verifyYouTubeConnection().then((yt) => {
   }
 });
 
+// Test TikTok Connection
+getTikTokAccessToken().then((token) => {
+  if (token) {
+    console.log("[Boot] 🎵 TikTok Account Connected & Authorized for Video Publishing.");
+  } else {
+    console.warn("[Boot] ⚠️ TikTok credentials not fully configured.");
+  }
+});
+
 // [DISABLED FOR NOW] Express Webhook Server (for Facebook Messenger AI Auto-Reply)
 // startServer();
 
@@ -52,9 +62,9 @@ runNanoJob().catch((err) => console.error("[Startup] Nano Facts job error:", err
 // Run comment responder once immediately on startup safely
 runCommentResponderJob().catch((err) => console.error("[Startup] Comment responder error:", err.message));
 
-// Run Reels & YouTube Shorts Publisher once on startup (after 5s to let Telegram listener sync queue)
+// Run Multi-Platform (FB + YouTube + TikTok) Publisher once on startup (after 5s to let Telegram listener sync queue)
 setTimeout(() => {
-  runReelsPublisherJob().catch((err) => console.error("[Startup] Reels/Shorts publisher error:", err.message));
+  runReelsPublisherJob().catch((err) => console.error("[Startup] Multi-Platform publisher error:", err.message));
 }, 5000);
 
 // Schedule Asta Plays (Text Post) at 1:00 AM, 6:00 AM, 11:00 AM, 4:00 PM, 9:00 PM (Every 5 Hours)
@@ -74,8 +84,8 @@ schedule.scheduleJob("*/2 * * * *", () => {
   runCommentResponderJob();
 });
 
-// Schedule Facebook Reels & YouTube Shorts Auto-Publisher at 12:00 AM, 4:00 AM, 8:00 AM, 12:00 PM, 4:00 PM, 8:00 PM (Every 4 Hours)
+// Schedule Multi-Platform (Facebook Reels + YouTube Shorts + TikTok) Auto-Publisher at 12:00 AM, 4:00 AM, 8:00 AM, 12:00 PM, 4:00 PM, 8:00 PM (Every 4 Hours)
 schedule.scheduleJob("0 0,4,8,12,16,20 * * *", () => {
-  console.log("\n[Scheduler] Running Facebook Reels & YouTube Shorts Auto-Publisher at:", new Date().toLocaleString());
+  console.log("\n[Scheduler] Running Multi-Platform (FB + YouTube + TikTok) Auto-Publisher at:", new Date().toLocaleString());
   runReelsPublisherJob();
 });

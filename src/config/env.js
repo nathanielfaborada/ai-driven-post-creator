@@ -49,6 +49,12 @@ export const config = {
     clientSecret: process.env.YOUTUBE_CLIENT_SECRET,
     refreshToken: process.env.YOUTUBE_REFRESH_TOKEN,
   },
+  tiktok: {
+    clientKey: process.env.TIKTOK_CLIENT_KEY,
+    clientSecret: process.env.TIKTOK_CLIENT_SECRET,
+    refreshToken: process.env.TIKTOK_REFRESH_TOKEN,
+    openId: process.env.TIKTOK_OPEN_ID,
+  },
   astaPlays: {
     pageId: process.env.FB_PAGE_ID_ASTA_PLAYS,
     pageToken: process.env.FB_PAGE_ACCESS_TOKEN_ASTA_PLAYS,

@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1120px" height="620px" viewBox="-0.5 -0.5 1120 620" style="background-color: #0f172a;">
+  <defs>
+    <filter id="shadow2" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    <marker id="ar-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="ar-sky" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="ar-indigo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#818cf8"/>
+    </marker>
+    <marker id="ar-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/>
+    </marker>
+  </defs>
+
+  <!-- Section 1: Video Publishing Workflow -->
+  <rect x="30" y="30" width="1060" height="230" rx="14" fill="#1e293b" stroke="#38bdf8" stroke-width="2" filter="url(#shadow2)"/>
+  <text x="50" y="65" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="16" font-weight="bold">Pipeline 2.1: Multi-Platform Video Cross-Posting Workflow (Every 4 Hours)</text>
+
+  <rect x="50" y="90" width="120" height="60" rx="10" fill="#b45309" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="110" y="115" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">Cron Trigger</text>
+  <text x="110" y="133" fill="#fef08a" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" text-anchor="middle">(Every 4 Hours)</text>
+
+  <rect x="210" y="90" width="140" height="60" rx="10" fill="#065f46" stroke="#34d399" stroke-width="1.5"/>
+  <text x="280" y="115" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">Check Supabase</text>
+  <text x="280" y="133" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" text-anchor="middle">FIFO / Archive</text>
+
+  <rect x="390" y="90" width="140" height="60" rx="10" fill="#0369a1" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="460" y="115" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">Download Video</text>
+  <text x="460" y="133" fill="#bae6fd" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" text-anchor="middle">Telegram API (20MB)</text>
+
+  <rect x="570" y="90" width="150" height="60" rx="10" fill="#4338ca" stroke="#818cf8" stroke-width="1.5"/>
+  <text x="645" y="115" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">Generate AI SEO</text>
+  <text x="645" y="133" fill="#c7d2fe" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" text-anchor="middle">Gemini 3.6 Flash Pool</text>
+
+  <rect x="760" y="80" width="130" height="35" rx="6" fill="#1e40af" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="825" y="102" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">1. FB Reels (v26.0)</text>
+
+  <rect x="760" y="125" width="130" height="35" rx="6" fill="#991b1b" stroke="#f87171" stroke-width="1.5"/>
+  <text x="825" y="147" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">2. YouTube Shorts (v3)</text>
+
+  <rect x="760" y="170" width="130" height="35" rx="6" fill="#831843" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="825" y="192" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">3. TikTok Video (v2)</text>
+
+  <rect x="930" y="90" width="140" height="80" rx="10" fill="#065f46" stroke="#34d399" stroke-width="1.5"/>
+  <text x="1000" y="120" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">Archive &amp; Cleanup</text>
+  <text x="1000" y="140" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" text-anchor="middle">Copy to TG Channel</text>
+  <text x="1000" y="155" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" text-anchor="middle">Delete from Queue</text>
+
+  <!-- Connectors in 2.1 -->
+  <path d="M 170 120 L 210 120" stroke="#fbbf24" stroke-width="2" fill="none" marker-end="url(#ar-amber)"/>
+  <path d="M 350 120 L 390 120" stroke="#34d399" stroke-width="2" fill="none" marker-end="url(#ar-green)"/>
+  <path d="M 530 120 L 570 120" stroke="#38bdf8" stroke-width="2" fill="none" marker-end="url(#ar-sky)"/>
+  <path d="M 720 120 L 760 97" stroke="#818cf8" stroke-width="2" fill="none" marker-end="url(#ar-indigo)"/>
+  <path d="M 720 120 L 760 142" stroke="#818cf8" stroke-width="2" fill="none" marker-end="url(#ar-indigo)"/>
+  <path d="M 720 120 L 760 187" stroke="#818cf8" stroke-width="2" fill="none" marker-end="url(#ar-indigo)"/>
+  <path d="M 890 130 L 930 130" stroke="#34d399" stroke-width="2" fill="none" marker-end="url(#ar-green)"/>
+
+  <!-- Section 2: Text Posts & Comment Responder Pipelines -->
+  <rect x="30" y="290" width="510" height="290" rx="14" fill="#1e293b" stroke="#818cf8" stroke-width="2" filter="url(#shadow2)"/>
+  <text x="50" y="325" fill="#818cf8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="15" font-weight="bold">Pipeline 2.2: Automated Feed Text Posts (5h)</text>
+  
+  <rect x="50" y="350" width="130" height="50" rx="8" fill="#b45309" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="115" y="380" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">Cron (Every 5h)</text>
+
+  <rect x="220" y="350" width="140" height="50" rx="8" fill="#4338ca" stroke="#818cf8" stroke-width="1.5"/>
+  <text x="290" y="375" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">Gemini 3.6 Flash</text>
+  <text x="290" y="390" fill="#c7d2fe" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" text-anchor="middle">(MLBB &amp; Science)</text>
+
+  <rect x="400" y="350" width="120" height="50" rx="8" fill="#1e40af" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="460" y="380" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">FB Feed Post</text>
+
+  <path d="M 180 375 L 220 375" stroke="#fbbf24" stroke-width="2" fill="none" marker-end="url(#ar-amber)"/>
+  <path d="M 360 375 L 400 375" stroke="#818cf8" stroke-width="2" fill="none" marker-end="url(#ar-indigo)"/>
+
+  <!-- Section 3: Comment Responder -->
+  <rect x="580" y="290" width="510" height="290" rx="14" fill="#1e293b" stroke="#34d399" stroke-width="2" filter="url(#shadow2)"/>
+  <text x="600" y="325" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="15" font-weight="bold">Pipeline 2.3: Audience Comment Responder (2m)</text>
+
+  <rect x="600" y="350" width="100" height="50" rx="8" fill="#b45309" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="650" y="380" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">Poll (2 min)</text>
+
+  <rect x="730" y="350" width="100" height="50" rx="8" fill="#0369a1" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="780" y="375" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">Fetch Posts</text>
+  <text x="780" y="390" fill="#bae6fd" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="9" text-anchor="middle">&amp; Comments</text>
+
+  <rect x="860" y="350" width="100" height="50" rx="8" fill="#065f46" stroke="#34d399" stroke-width="1.5"/>
+  <text x="910" y="375" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">Human Delay</text>
+  <text x="910" y="390" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="9" text-anchor="middle">(40-75s pause)</text>
+
+  <rect x="990" y="350" width="80" height="50" rx="8" fill="#1e40af" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="1030" y="380" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">Reply</text>
+
+  <path d="M 700 375 L 730 375" stroke="#fbbf24" stroke-width="2" fill="none" marker-end="url(#ar-amber)"/>
+  <path d="M 830 375 L 860 375" stroke="#38bdf8" stroke-width="2" fill="none" marker-end="url(#ar-sky)"/>
+  <path d="M 960 375 L 990 375" stroke="#34d399" stroke-width="2" fill="none" marker-end="url(#ar-green)"/>
+</svg>

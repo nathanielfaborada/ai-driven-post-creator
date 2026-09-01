@@ -1,0 +1,35 @@
+<mxfile host="app.diagrams.net" modified="2026-09-01T13:28:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="dfd-level-3" name="DFD Level 3 - Micro Logic & State Machines">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" background="#0f172a" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Track FB -->
+        <mxCell id="t_fb" value="&lt;b&gt;Track A: Facebook Reels (3-Phase Protocol)&lt;/b&gt;&lt;br&gt;Phase 1: start -&gt; Phase 2: binary upload -&gt; Phase 3: finish &amp; publish" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e40af;strokeColor=#60a5fa;fontColor=#ffffff;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="300" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Track YT -->
+        <mxCell id="t_yt" value="&lt;b&gt;Track B: YouTube Shorts (Resumable Stream)&lt;/b&gt;&lt;br&gt;stream.PassThrough(videoBuffer) -&gt; youtube.videos.insert (#Shorts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#991b1b;strokeColor=#f87171;fontColor=#ffffff;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="80" width="320" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Track TT -->
+        <mxCell id="t_tt" value="&lt;b&gt;Track C: TikTok Direct Post (2-Phase Protocol)&lt;/b&gt;&lt;br&gt;Phase 1: init upload session -&gt; Phase 2: binary PUT with Content-Range" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#831843;strokeColor=#ec4899;fontColor=#ffffff;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="800" y="80" width="320" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Consolidation Node -->
+        <mxCell id="sync" value="&lt;b&gt;Consolidate Publish IDs (FB Video ID, YT ID, TikTok Publish ID)&lt;/b&gt;&lt;br&gt;Proceed to Telegram Archive Channel &amp; Cleanup Queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#065f46;strokeColor=#34d399;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="320" y="270" width="540" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e_fb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#60a5fa;" edge="1" parent="1" source="t_fb" target="sync" />
+        <mxCell id="e_yt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#f87171;" edge="1" parent="1" source="t_yt" target="sync" />
+        <mxCell id="e_tt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ec4899;" edge="1" parent="1" source="t_tt" target="sync" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

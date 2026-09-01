@@ -1,0 +1,60 @@
+<mxfile host="app.diagrams.net" modified="2026-09-01T13:26:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="dfd-level-1" name="DFD Level 1 - Subsystem Decomposition">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" background="#0f172a" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Subsystem 1: Ingestion -->
+        <mxCell id="s1" value="&lt;b&gt;1.0 Ingestion &amp; Category Router&lt;/b&gt;&lt;br&gt;(Telegram Long-Polling &amp; Classifier)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0369a1;strokeColor=#38bdf8;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="260" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Data Stores -->
+        <mxCell id="ds1" value="&lt;b&gt;D1: reels_queue&lt;/b&gt;&lt;br&gt;(Pending FIFO Table)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#059669;strokeColor=#34d399;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="460" y="50" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ds2" value="&lt;b&gt;D2: reels_archive&lt;/b&gt;&lt;br&gt;(10-Category Evergreen Library)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#059669;strokeColor=#34d399;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="460" y="150" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Subsystem 3: Schedulers -->
+        <mxCell id="s3" value="&lt;b&gt;3.0 24/7 Scheduling Orchestrator&lt;/b&gt;&lt;br&gt;(node-schedule Crons &amp; Workers)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d97706;strokeColor=#fbbf24;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="60" y="320" width="260" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Subsystem 4: AI Engine -->
+        <mxCell id="s4" value="&lt;b&gt;4.0 AI Intelligence Engine&lt;/b&gt;&lt;br&gt;(10-Key Pool / Model Fallback / Formatter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4f46e5;strokeColor=#818cf8;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="450" y="320" width="280" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Subsystem 5: Distribution -->
+        <mxCell id="s5" value="&lt;b&gt;5.0 Triple Social Distribution&lt;/b&gt;&lt;br&gt;(FB Reels + YT Shorts + TikTok)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#be185d;strokeColor=#f472b6;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="840" y="320" width="260" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e1" value="Queue FIFO items" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#38bdf8;fontColor=#94a3b8;" edge="1" parent="1" source="s1" target="ds1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e2" value="Direct seed items" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#38bdf8;fontColor=#94a3b8;" edge="1" parent="1" source="s1" target="ds2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e3" value="Fetch pending / recycled video" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#34d399;fontColor=#94a3b8;" edge="1" parent="1" source="ds1" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e4" value="Job triggers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#fbbf24;fontColor=#94a3b8;" edge="1" parent="1" source="s3" target="s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e5" value="Generated Captions &amp; Video Buffers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#818cf8;fontColor=#94a3b8;" edge="1" parent="1" source="s4" target="s5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

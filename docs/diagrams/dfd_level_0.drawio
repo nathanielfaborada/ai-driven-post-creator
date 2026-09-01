@@ -1,0 +1,81 @@
+<mxfile host="app.diagrams.net" modified="2026-09-01T13:25:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="dfd-level-0" name="DFD Level 0 - System Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" background="#0f172a" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Central Engine -->
+        <mxCell id="central-engine" value="&lt;b&gt;AI-Driven Multi-Platform&lt;br&gt;Automation Engine&lt;/b&gt;&lt;br&gt;(Node.js Core Controller)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=3;fontColor=#f8fafc;fontSize=15;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="320" width="240" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- External Entities -->
+        <mxCell id="creator" value="&lt;b&gt;Content Creator&lt;/b&gt;&lt;br&gt;(Drops Videos &amp; Hints)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#334155;strokeColor=#94a3b8;fontColor=#f8fafc;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="60" y="100" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="audience" value="&lt;b&gt;Audience &amp; Viewers&lt;/b&gt;&lt;br&gt;(Comments &amp; Messenger DMs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#334155;strokeColor=#94a3b8;fontColor=#f8fafc;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="860" y="100" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="telegram" value="&lt;b&gt;Telegram Bot API&lt;/b&gt;&lt;br&gt;(Queue &amp; 10 Archive Channels)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0284c7;strokeColor=#38bdf8;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="60" y="345" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gemini" value="&lt;b&gt;Google Gemini AI Pool&lt;/b&gt;&lt;br&gt;(10-Key Pool / Model Fallback)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6366f1;strokeColor=#818cf8;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="445" y="80" width="210" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="supabase" value="&lt;b&gt;Supabase PostgreSQL&lt;/b&gt;&lt;br&gt;(reels_queue &amp; reels_archive)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#059669;strokeColor=#34d399;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="450" y="550" width="200" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="meta" value="&lt;b&gt;Meta Graph API v26.0&lt;/b&gt;&lt;br&gt;(FB Reels, Feed &amp; Comments)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1d4ed8;strokeColor=#60a5fa;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="80" y="560" width="190" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="youtube" value="&lt;b&gt;YouTube Data API v3&lt;/b&gt;&lt;br&gt;(Shorts / videos.insert)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dc2626;strokeColor=#f87171;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="860" y="345" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tiktok" value="&lt;b&gt;TikTok Content API v2&lt;/b&gt;&lt;br&gt;(/post/publish/video/init/)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#ec4899;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="860" y="560" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Connectors -->
+        <mxCell id="edge1" value="Uploads MP4 &amp; Topic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#38bdf8;fontColor=#94a3b8;strokeWidth=2;" edge="1" parent="1" source="creator" target="telegram">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge2" value="Long-Polling &amp; Video Streams" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#38bdf8;fontColor=#94a3b8;strokeWidth=2;" edge="1" parent="1" source="telegram" target="central-engine">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge3" value="Prompt Requests &amp; AI Inference" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#818cf8;fontColor=#94a3b8;strokeWidth=2;" edge="1" parent="1" source="central-engine" target="gemini">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge4" value="CRUD State Sync" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#34d399;fontColor=#94a3b8;strokeWidth=2;" edge="1" parent="1" source="central-engine" target="supabase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge5" value="1. Publish Reels &amp; Replies" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#60a5fa;fontColor=#94a3b8;strokeWidth=2;" edge="1" parent="1" source="central-engine" target="meta">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge6" value="2. Cross-Post Shorts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#f87171;fontColor=#94a3b8;strokeWidth=2;" edge="1" parent="1" source="central-engine" target="youtube">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge7" value="3. Cross-Post Videos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ec4899;fontColor=#94a3b8;strokeWidth=2;" edge="1" parent="1" source="central-engine" target="tiktok">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge8" value="Interactions" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;fontColor=#94a3b8;strokeWidth=2;" edge="1" parent="1" source="audience" target="central-engine">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

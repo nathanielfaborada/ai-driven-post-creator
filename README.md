@@ -19,7 +19,7 @@ A production-grade multi-platform automation backend built with Node.js that pow
 
 ## Core Systems & Architecture
 
-The architecture is structured across four standardized Data Flow Diagram (DFD) levels, spanning from high-level system context to micro-level execution algorithms.
+The architecture is structured across four standardized Data Flow Diagram (DFD) levels, spanning from high-level system context to micro-level execution algorithms. Editable Draw.io diagrams are stored in [`docs/diagrams/`](docs/diagrams/) and rendered below.
 
 ---
 
@@ -35,19 +35,8 @@ DFD Level 0 defines the macro-level operational boundary of the automation platf
 6. **Meta Graph API (v26.0):** Receives published Facebook Page feeds, Video Reels, and sub-comment replies.
 7. **Google YouTube Data API (v3) & TikTok Content Posting API (v2):** Receives automated YouTube Shorts and TikTok video uploads.
 
-```mermaid
-flowchart TD
-    Creator["Content Creator\n(Uploads Video Reels)"] -->|Drop Videos & Topic Context| Engine["AI-Driven Multi-Platform\nAutomation Engine\n(Node.js Core)"]
-    Audience["Audience / Viewers\n(Facebook & Messenger)"] -->|Comments & Direct Messages| Engine
-
-    Engine <-->|Long-Polling Updates & Video Stream| TGAPI["Telegram Bot API\n(Queue & 10 Archive Channels)"]
-    Engine <-->|Multi-Key Prompt Requests & Inference| GeminiAPI["Google Gemini AI Pool\n(Gemini 3.6 / 3.5 Flash)"]
-    Engine <-->|CRUD Operations & State Sync| SupabaseDB[("Supabase Cloud Database\n(PostgreSQL Queue & Archive)")]
-
-    Engine -->|1. Publish FB Reels & Feed Posts| MetaAPI["Meta Graph API v26.0\n(Facebook Pages)"]
-    Engine -->|2. Cross-Post YouTube Shorts| YTAPI["YouTube Data API v3\n(videos.insert)"]
-    Engine -->|3. Cross-Post TikTok Videos| TTAPI["TikTok Content API v2\n(/post/publish/video/init/)"]
-```
+[![DFD Level 0 - System Context](docs/diagrams/dfd_level_0.drawio.svg)](docs/diagrams/dfd_level_0.drawio)
+*Open or import [`docs/diagrams/dfd_level_0.drawio`](docs/diagrams/dfd_level_0.drawio) in [draw.io](https://app.diagrams.net/) to edit.*
 
 ---
 
@@ -61,206 +50,34 @@ DFD Level 1 decomposes the central engine into five interconnected primary subsy
 * **Subsystem 4.0 (AI Intelligence Engine):** Balances API traffic across 10 Gemini keys with automatic failover and SEO formatting.
 * **Subsystem 5.0 (Triple-Platform Social Distribution):** Executes parallel publishing to Facebook Reels, YouTube Shorts, and TikTok.
 
-```mermaid
-flowchart TD
-    subgraph S1["Subsystem 1.0: Ingestion & Router"]
-        TGListener["Telegram Long-Polling Listener"]
-        CatClassifier["Category Classifier & Router"]
-    end
-
-    subgraph S2["Subsystem 2.0: Database State Management"]
-        QueueTable[("Data Store: reels_queue\n(Pending FIFO)")]
-        ArchiveTable[("Data Store: reels_archive\n(10-Category Evergreen Library)")]
-    end
-
-    subgraph S3["Subsystem 3.0: 24/7 Scheduling Orchestrator"]
-        CronReels["Reels/Shorts Scheduler\n(Every 4 Hours)"]
-        CronText["Text Posts Scheduler\n(Every 5 Hours)"]
-        CronComments["Comment Responder\n(Every 2 Minutes)"]
-    end
-
-    subgraph S4["Subsystem 4.0: AI Intelligence Engine"]
-        KeyPool["Gemini 10-Key Load Balancer"]
-        ModelFallback["Instant Model Fallback\n(3.6 Flash -> 3.5 Flash -> Flash-Lite)"]
-        PromptEngine["SEO Caption & Persona Generator"]
-    end
-
-    subgraph S5["Subsystem 5.0: Triple Social Distribution"]
-        FBDispatcher["Facebook Graph API Dispatcher"]
-        YTDispatcher["YouTube Data API Dispatcher"]
-        TTDispatcher["TikTok Content API Dispatcher"]
-    end
-
-    TGListener --> CatClassifier
-    CatClassifier -->|Queue Items| QueueTable
-    CatClassifier -->|Direct Seed Items| ArchiveTable
-
-    CronReels --> S4
-    CronText --> S4
-    CronComments --> S4
-
-    S4 --> S5
-    QueueTable --> CronReels
-    ArchiveTable <--> CronReels
-```
+[![DFD Level 1 - Subsystem Decomposition](docs/diagrams/dfd_level_1.drawio.svg)](docs/diagrams/dfd_level_1.drawio)
+*Open or import [`docs/diagrams/dfd_level_1.drawio`](docs/diagrams/dfd_level_1.drawio) in [draw.io](https://app.diagrams.net/) to edit.*
 
 ---
 
 ### Data Flow Diagram Level 2: Detailed Functional Process Workflows
 
 #### Functional Overview:
-DFD Level 2 details the execution flow of the three primary automated workflows running concurrently.
+DFD Level 2 details the execution flow of the three primary automated workflows running concurrently:
+* **Workflow 2.1 (Multi-Platform Video Publishing):** Periodic 4-hour cycle ingesting FIFO/Evergreen video, generating Gemini 3.6 SEO metadata, cross-posting concurrently to Facebook Reels, YouTube Shorts, and TikTok, followed by Telegram category archiving.
+* **Workflow 2.2 (Automated Feed Text Posts):** 5-hour scheduled cycle generating specialized Gaming (MLBB) and Science content with Unicode formatting for Facebook Page Feeds.
+* **Workflow 2.3 (Audience Comment Auto-Responder):** 2-minute fast-polling listener filtering unreplied comments within 24h, applying randomized human delay (40-75s), and replying contextually.
 
-#### Workflow 2.1: Multi-Platform Video Publishing & Cross-Posting Workflow
-1. **Trigger:** Fires every 4 hours (12 AM, 4 AM, 8 AM, 12 PM, 4 PM, 8 PM) or upon boot.
-2. **Fetch:** Checks Supabase `reels_queue` for pending FIFO video. If empty, selects eligible video from `reels_archive`.
-3. **Binary Transfer:** Downloads binary video buffer from Telegram API.
-4. **AI Generation:** Generates Facebook caption with subscription CTA and YouTube Shorts SEO metadata.
-5. **Triple Dispatch:** Publishes concurrently to Facebook Reels, YouTube Shorts, and TikTok.
-6. **Archive & Cleanup:** Copies video to Telegram category archive channel, deletes from Queue channel, and updates Supabase database.
-
-```mermaid
-flowchart TD
-    W1_Start(["Scheduler Trigger\n(Every 4 Hours)"]) --> W1_CheckQueue{"Queue has items\nin Supabase?"}
-    
-    W1_CheckQueue -- Yes (FIFO) --> W1_PopFIFO["Fetch oldest pending reel\nfrom reels_queue"]
-    W1_CheckQueue -- No (Fallback) --> W1_ArchiveRecycle["Select candidate from\n10-Category Evergreen Archive"]
-
-    W1_PopFIFO & W1_ArchiveRecycle --> W1_Download["Download Video Buffer\nvia Telegram Bot API"]
-    W1_Download --> W1_AIGen["Generate Platform Metadata\nvia Gemini 3.6 Flash Pool"]
-
-    W1_AIGen --> W1_PostFB["1. Publish Facebook Reel\n(POST /{pageId}/video_reels)"]
-    W1_AIGen --> W1_PostYT["2. Publish YouTube Short\n(POST /videos.insert)"]
-    W1_AIGen --> W1_PostTT["3. Publish TikTok Video\n(POST /v2/post/publish/video/init/)"]
-
-    W1_PostFB & W1_PostYT & W1_PostTT --> W1_Persist["Archive to Telegram Category Channel\nDelete from Queue Channel\nUpdate Supabase Archive State"]
-```
-
-#### Workflow 2.2: Automated Feed Text Content Workflow
-1. **Trigger:** Fires every 5 hours (1 AM, 6 AM, 11 AM, 4 PM, 9 PM).
-2. **Generation:** Generates Mobile Legends spotlight post for Asta Plays and Science & Technology post for Nano Facts.
-3. **Formatting:** Converts headlines to Unicode bold text.
-4. **Publication:** Posts directly to Facebook page feeds via `POST /{pageId}/feed`.
-
-```mermaid
-flowchart LR
-    W2_Start(["Scheduler Trigger\n(Every 5 Hours)"]) --> W2_AI["Gemini AI Key Pool\n(Round-Robin Inference)"]
-    W2_AI --> W2_Asta["Generate MLBB Hero Spotlight\n(Asta Plays)"]
-    W2_AI --> W2_Nano["Generate Science Post & CTA\n(Nano Facts)"]
-    W2_Asta & W2_Nano --> W2_Format["Unicode Bold Formatter"]
-    W2_Format --> W2_Publish["Publish to Facebook Feed\n(POST /{pageId}/feed)"]
-```
-
-#### Workflow 2.3: Interactive Audience Engagement & Comment Auto-Responder
-1. **Trigger:** Fast-polling interval every 2 minutes.
-2. **Scan:** Queries recent Facebook posts and video reels for unreplied comments.
-3. **Deduplication:** Checks local cache `replied_comments.json` to prevent duplicate replies.
-4. **Natural Pacing:** Applies randomized human-like delay (40 to 75 seconds).
-5. **AI Persona:** Generates contextual single-paragraph reply without emojis.
-6. **Reply:** Posts sub-comment reply via `POST /{commentId}/comments`.
-
-```mermaid
-flowchart TD
-    W3_Start(["Fast Polling\n(Every 2 Minutes)"]) --> W3_Fetch["Fetch recent 10 posts & reels\nwith comments via Meta Graph API"]
-    W3_Fetch --> W3_Filter{"Comment unreplied &\ncreated within 24h?"}
-    
-    W3_Filter -- No --> W3_Skip["Skip Comment"]
-    W3_Filter -- Yes --> W3_Delay["Apply Natural Human Delay\n(40-75 seconds)"]
-    
-    W3_Delay --> W3_AIReply["Generate Persona Reply\nvia Gemini AI"]
-    W3_AIReply --> W3_PostReply["Post Sub-Comment Reply\n(POST /{commentId}/comments)"]
-    W3_PostReply --> W3_Cache["Save Comment ID to\nreplied_comments.json"]
-```
+[![DFD Level 2 - Detailed Process Workflows](docs/diagrams/dfd_level_2.drawio.svg)](docs/diagrams/dfd_level_2.drawio)
+*Open or import [`docs/diagrams/dfd_level_2.drawio`](docs/diagrams/dfd_level_2.drawio) in [draw.io](https://app.diagrams.net/) to edit.*
 
 ---
 
 ### Data Flow Diagram Level 3: Micro-Level Logic & Algorithmic State Machines
 
 #### Functional Overview:
-DFD Level 3 exposes the low-level algorithmic logic and state machines governing core operational resilience.
+DFD Level 3 exposes the low-level algorithmic logic and state machines governing core operational resilience:
+* **Logic 3.1 (Supabase Evergreen Recycling):** Minimum 10-video per-category thresholding, `repost_count ASC` sorting, and candidate selection.
+* **Logic 3.2 (Gemini Multi-Key Failover):** 10-key round-robin rotation, 503 model fallback (`3.6 Flash` -> `3.5 Flash` -> `Flash-Lite`), and 429 quota switching.
+* **Logic 3.3 (3-Way Video Binary Chunk Upload):** Direct binary stream ingestion via Telegram Bot API (20MB limit) followed by parallel dispatch across Facebook Reels (3-phase protocol), YouTube Shorts (stream PassThrough), and TikTok (2-phase chunk PUT).
 
-#### Logic 3.1: Supabase Evergreen Archive Recycling Algorithm
-* **Minimum Threshold:** At least 10 videos must exist per category before recycling is allowed, preventing repetitive content.
-* **Fair Rotation:** Eligible categories sort items by `repost_count ASC`, prioritizing the least-frequently posted items.
-* **Update:** Increments `repost_count += 1` and updates `last_reposted_at` timestamp upon successful publication.
-
-```mermaid
-flowchart TD
-    L1_Start["Check reels_queue in Supabase"] --> L1_HasQueue{"Queue length > 0?"}
-    
-    L1_HasQueue -- Yes --> L1_FIFO["Process FIFO Item #1\n(Delete from Queue after publish)"]
-    L1_HasQueue -- No --> L1_GroupCat["Group reels_archive items\nby 10 Science Categories"]
-    
-    L1_GroupCat --> L1_Threshold{"Any category has\n>= 10 videos?"}
-    L1_Threshold -- No --> L1_Wait["Log threshold status and wait\nfor new Telegram uploads"]
-    L1_Threshold -- Yes --> L1_FilterPool["Filter all items from qualified categories"]
-    
-    L1_FilterPool --> L1_Sort["Sort items by repost_count ASC"]
-    L1_Sort --> L1_Candidate["Candidate Pool = items where\nrepost_count <= min_count + 1"]
-    L1_Candidate --> L1_Random["Select random candidate from pool"]
-    L1_Random --> L1_Execute["Publish and increment repost_count += 1"]
-```
-
-#### Logic 3.2: Gemini 10-Key Pool Round-Robin & Fast-Failover State Machine
-* **Round-Robin Index:** Sequential rotation across 10 Gemini API keys (`GEMINI_PROJECT_1` through `10`).
-* **503 Spike Fast-Failover:** Automatically drops through model hierarchy (`gemini-3.6-flash` -> `gemini-3.5-flash` -> `gemini-3.5-flash-lite` -> `gemini-flash-lite-latest`) without crashing the job.
-* **429 Quota Recovery:** Switches to the next available API key in the pool on quota exhaustion.
-
-```mermaid
-stateDiagram-v2
-    [*] --> SelectKey: KeyIndex = (LastIndex + 1) % 10
-    SelectKey --> AttemptModel: Model = gemini-3.6-flash
-
-    AttemptModel --> Success: HTTP 200 OK
-    AttemptModel --> ModelFallback: HTTP 503 / 404
-    AttemptModel --> KeyFailover: HTTP 429 Quota Limit
-
-    ModelFallback --> AttemptModel: Model = gemini-3.5-flash
-    ModelFallback --> AttemptModel: Model = gemini-3.5-flash-lite
-    ModelFallback --> AttemptModel: Model = gemini-flash-lite-latest
-
-    KeyFailover --> SelectKey: Try next API Key in Pool
-
-    Success --> [*]: Return Generated Text
-```
-
-#### Logic 3.3: 3-Way Video Binary Chunk Upload Lifecycle
-
-* **Telegram Stream Ingestion:** Downloads raw MP4 video buffer directly via `GET /file/bot{token}/{file_path}` while validating Telegram's 20MB bot limit.
-* **Track A - Facebook Reels (3-Phase Protocol):** 
-  1. `POST /{pageId}/video_reels` with `upload_phase: "start"` to generate `upload_url` and `video_id`.
-  2. `POST {upload_url}` to stream binary video bytes.
-  3. `POST /{pageId}/video_reels` with `upload_phase: "finish"` and caption to publish.
-* **Track B - YouTube Shorts (Resumable Stream Protocol):** 
-  1. Wraps binary buffer in `stream.PassThrough()`.
-  2. Executes `youtube.videos.insert` with category 28 (Science & Technology), privacy "public", and `#Shorts` tag.
-* **Track C - TikTok Direct Post (2-Phase Protocol):** 
-  1. `POST /v2/post/publish/video/init/` with `source: "FILE_UPLOAD"` to obtain `upload_url` and `publish_id`.
-  2. `PUT {upload_url}` with `Content-Range: bytes 0-{size-1}/{size}` header to transfer chunks.
-
-```mermaid
-flowchart TD
-    StartBuffer["1. Ingest Video Buffer from Telegram Bot API\n(Validate 20MB bot limit)"] --> ForkParallel{"Parallel Triple Dispatch"}
-
-    subgraph Track_FB["Track A: Facebook Reels (3-Phase Protocol)"]
-        FB1["Phase 1: POST /{pageId}/video_reels\n(upload_phase: start)"] --> FB2["Phase 2: POST upload_url\n(Transfer binary video bytes)"]
-        FB2 --> FB3["Phase 3: POST /{pageId}/video_reels\n(upload_phase: finish & publish)"]
-    end
-
-    subgraph Track_YT["Track B: YouTube Shorts (Resumable Stream)"]
-        YT1["Create stream.PassThrough(videoBuffer)"] --> YT2["POST /videos.insert (YouTube Data API v3)\n(Category 28: Science & Tech + #Shorts)"]
-    end
-
-    subgraph Track_TT["Track C: TikTok Direct Post (2-Phase Protocol)"]
-        TT1["Phase 1: POST /v2/post/publish/video/init/\n(Initialize session & get upload_url)"] --> TT2["Phase 2: PUT upload_url\n(Stream bytes with Content-Range)"]
-    end
-
-    ForkParallel --> Track_FB
-    ForkParallel --> Track_YT
-    ForkParallel --> Track_TT
-
-    Track_FB & Track_YT & Track_TT --> SyncDone["Consolidate Publish IDs (FB Video ID, YT ID, TikTok Publish ID)\n& Proceed to Telegram Archive Cleanup"]
-```
+[![DFD Level 3 - Micro Logic & State Machines](docs/diagrams/dfd_level_3.drawio.svg)](docs/diagrams/dfd_level_3.drawio)
+*Open or import [`docs/diagrams/dfd_level_3.drawio`](docs/diagrams/dfd_level_3.drawio) in [draw.io](https://app.diagrams.net/) to edit.*
 
 ---
 

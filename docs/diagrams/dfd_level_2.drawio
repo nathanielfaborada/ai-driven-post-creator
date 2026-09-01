@@ -1,0 +1,58 @@
+<mxfile host="app.diagrams.net" modified="2026-09-01T13:27:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="dfd-level-2" name="DFD Level 2 - Detailed Process Pipelines">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" background="#0f172a" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Workflow 2.1 Container -->
+        <mxCell id="w1" value="&lt;b&gt;Pipeline 2.1: Multi-Platform Video Cross-Posting Workflow&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;fontColor=#ffffff;fontSize=13;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="1080" height="240" as="geometry" />
+        </mxCell>
+
+        <mxCell id="w1_trig" value="Cron Trigger&lt;br&gt;(Every 4 Hours)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#b45309;strokeColor=#fbbf24;fontColor=#ffffff;" vertex="1" parent="w1">
+          <mxGeometry x="30" y="70" width="120" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="w1_check" value="Check Supabase&lt;br&gt;reels_queue" style="rhombus;whiteSpace=wrap;html=1;fillColor=#065f46;strokeColor=#34d399;fontColor=#ffffff;" vertex="1" parent="w1">
+          <mxGeometry x="190" y="60" width="130" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="w1_dl" value="Download Buffer&lt;br&gt;(Telegram Bot API)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0369a1;strokeColor=#38bdf8;fontColor=#ffffff;" vertex="1" parent="w1">
+          <mxGeometry x="370" y="75" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="w1_ai" value="Generate SEO Metadata&lt;br&gt;(Gemini 3.6 Flash Pool)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4338ca;strokeColor=#818cf8;fontColor=#ffffff;" vertex="1" parent="w1">
+          <mxGeometry x="560" y="75" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="w1_fb" value="Publish FB Reel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e40af;strokeColor=#60a5fa;fontColor=#ffffff;" vertex="1" parent="w1">
+          <mxGeometry x="780" y="45" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="w1_yt" value="Cross-Post YT Short" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#991b1b;strokeColor=#f87171;fontColor=#ffffff;" vertex="1" parent="w1">
+          <mxGeometry x="780" y="95" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="w1_tt" value="Cross-Post TikTok" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#831843;strokeColor=#ec4899;fontColor=#ffffff;" vertex="1" parent="w1">
+          <mxGeometry x="780" y="145" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="w1_archive" value="Archive &amp; Cleanup&lt;br&gt;(Telegram &amp; Supabase)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#065f46;strokeColor=#34d399;fontColor=#ffffff;" vertex="1" parent="w1">
+          <mxGeometry x="940" y="75" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Edges in W1 -->
+        <mxCell id="w1_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#fbbf24;" edge="1" parent="w1" source="w1_trig" target="w1_check" />
+        <mxCell id="w1_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#34d399;" edge="1" parent="w1" source="w1_check" target="w1_dl" />
+        <mxCell id="w1_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#38bdf8;" edge="1" parent="w1" source="w1_dl" target="w1_ai" />
+        <mxCell id="w1_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#818cf8;" edge="1" parent="w1" source="w1_ai" target="w1_fb" />
+        <mxCell id="w1_e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#818cf8;" edge="1" parent="w1" source="w1_ai" target="w1_yt" />
+        <mxCell id="w1_e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#818cf8;" edge="1" parent="w1" source="w1_ai" target="w1_tt" />
+        <mxCell id="w1_e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#60a5fa;" edge="1" parent="w1" source="w1_fb" target="w1_archive" />
+        <mxCell id="w1_e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#f87171;" edge="1" parent="w1" source="w1_yt" target="w1_archive" />
+        <mxCell id="w1_e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ec4899;" edge="1" parent="w1" source="w1_tt" target="w1_archive" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

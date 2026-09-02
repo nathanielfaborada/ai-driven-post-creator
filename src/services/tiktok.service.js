@@ -90,32 +90,50 @@ export async function publishTikTokVideo({
       cleanCaption = `${cleanCaption} #fyp #foryou #ScienceTok #NanoFacts #STEM`;
     }
 
-    // 1. Initialize Direct Post Upload
-    const initRes = await axios.post(
-      "https://open.tiktokapis.com/v2/post/publish/video/init/",
-      {
-        post_info: {
-          title: cleanCaption.slice(0, 2000),
-          privacy_level: privacyLevel,
-          disable_duet: false,
-          disable_stitch: false,
-          disable_comment: false,
-          video_cover_timestamp_ms: 1000,
+    const effectivePrivacy = process.env.TIKTOK_PRIVACY_LEVEL || privacyLevel;
+
+    // Helper for initiating upload
+    const initiateUpload = async (targetPrivacy) => {
+      return await axios.post(
+        "https://open.tiktokapis.com/v2/post/publish/video/init/",
+        {
+          post_info: {
+            title: cleanCaption.slice(0, 2000),
+            privacy_level: targetPrivacy,
+            disable_duet: false,
+            disable_stitch: false,
+            disable_comment: false,
+            video_cover_timestamp_ms: 1000,
+          },
+          source_info: {
+            source: "FILE_UPLOAD",
+            video_size: videoBuffer.length,
+            chunk_size: videoBuffer.length,
+            total_chunk_count: 1,
+          },
         },
-        source_info: {
-          source: "FILE_UPLOAD",
-          video_size: videoBuffer.length,
-          chunk_size: videoBuffer.length,
-          total_chunk_count: 1,
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json; charset=UTF-8",
-        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json; charset=UTF-8",
+          },
+        }
+      );
+    };
+
+    // 1. Initialize Direct Post Upload (with unaudited fallback)
+    let initRes;
+    try {
+      initRes = await initiateUpload(effectivePrivacy);
+    } catch (initErr) {
+      const errCode = initErr.response?.data?.error?.code;
+      if (errCode === "unaudited_client_can_only_post_to_private_accounts" && effectivePrivacy !== "SELF_ONLY") {
+        console.warn("[TikTok Video] [WARN] Unaudited TikTok app detected. Retrying with 'SELF_ONLY' (Private video)...");
+        initRes = await initiateUpload("SELF_ONLY");
+      } else {
+        throw initErr;
       }
-    );
+    }
 
     const publishData = initRes.data?.data;
     const publishId = publishData?.publish_id;

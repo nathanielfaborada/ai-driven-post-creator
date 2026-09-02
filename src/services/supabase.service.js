@@ -33,6 +33,18 @@ export async function testSupabaseConnection() {
       return false;
     }
 
+    // Verify Storage Bucket
+    try {
+      const { data: bucketData, error: bError } = await supabase.storage.getBucket("reels-media");
+      if (bError) {
+        console.warn("[Supabase Storage] [WARN] 'reels-media' bucket check:", bError.message);
+      } else {
+        console.log("[Supabase Storage] [SUCCESS] Storage bucket 'reels-media' is active and ready.");
+      }
+    } catch {
+      // Storage optional check
+    }
+
     console.log("[Supabase Service] [SUCCESS] Successfully connected to Supabase database (Tables: reels_queue, reels_archive ready).");
     return true;
   } catch (err) {
@@ -299,4 +311,80 @@ export async function logArchiveStats() {
   }
   console.log(`  - Total Evergreen Library: ${archive.length} video(s)`);
   console.log(`=========================================\n`);
+}
+
+/**
+ * Upload a video buffer or binary stream to Supabase Storage bucket.
+ * @param {Buffer} buffer
+ * @param {string} fileName
+ * @param {string} [contentType="video/mp4"]
+ * @param {string} [bucketName="reels-media"]
+ * @returns {Promise<{ publicUrl: string, path: string }|null>}
+ */
+export async function uploadVideoToStorage(buffer, fileName, contentType = "video/mp4", bucketName = "reels-media") {
+  if (!supabase || !buffer) return null;
+  try {
+    const cleanFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath = `reels/${Date.now()}_${cleanFileName}`;
+
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, buffer, {
+        contentType: contentType,
+        upsert: true,
+      });
+
+    if (error) {
+      console.error(`[Supabase Storage] [ERROR] Upload failed to '${bucketName}':`, error.message);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    const publicUrl = urlData?.publicUrl || "";
+    console.log(`[Supabase Storage] [SUCCESS] Uploaded ${cleanFileName} -> ${publicUrl}`);
+
+    return {
+      path: filePath,
+      publicUrl: publicUrl,
+    };
+  } catch (err) {
+    console.error("[Supabase Storage] [ERROR] Exception uploading video:", err.message);
+    return null;
+  }
+}
+
+/**
+ * Get the public CDN URL for a file in Supabase Storage.
+ * @param {string} filePath
+ * @param {string} [bucketName="reels-media"]
+ * @returns {string}
+ */
+export function getPublicVideoUrl(filePath, bucketName = "reels-media") {
+  if (!supabase || !filePath) return "";
+  const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+  return data?.publicUrl || "";
+}
+
+/**
+ * Delete a video file from Supabase Storage.
+ * @param {string} filePath
+ * @param {string} [bucketName="reels-media"]
+ * @returns {Promise<boolean>}
+ */
+export async function deleteVideoFromStorage(filePath, bucketName = "reels-media") {
+  if (!supabase || !filePath) return false;
+  try {
+    const { error } = await supabase.storage.from(bucketName).remove([filePath]);
+    if (error) {
+      console.error(`[Supabase Storage] [ERROR] Failed to delete ${filePath}:`, error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[Supabase Storage] [ERROR] Exception deleting file:", err.message);
+    return false;
+  }
 }

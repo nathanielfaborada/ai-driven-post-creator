@@ -314,18 +314,20 @@ export async function logArchiveStats() {
 }
 
 /**
- * Upload a video buffer or binary stream to Supabase Storage bucket.
+ * Upload a video buffer or binary stream to Supabase Storage bucket under its category folder.
  * @param {Buffer} buffer
  * @param {string} fileName
  * @param {string} [contentType="video/mp4"]
+ * @param {string} [category="General"]
  * @param {string} [bucketName="reels-media"]
  * @returns {Promise<{ publicUrl: string, path: string }|null>}
  */
-export async function uploadVideoToStorage(buffer, fileName, contentType = "video/mp4", bucketName = "reels-media") {
+export async function uploadVideoToStorage(buffer, fileName, contentType = "video/mp4", category = "General", bucketName = "reels-media") {
   if (!supabase || !buffer) return null;
   try {
     const cleanFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const filePath = `reels/${Date.now()}_${cleanFileName}`;
+    const folderName = category ? category.trim() : "General";
+    const filePath = `${folderName}/${Date.now()}_${cleanFileName}`;
 
     const { data, error } = await supabase.storage
       .from(bucketName)
@@ -335,7 +337,7 @@ export async function uploadVideoToStorage(buffer, fileName, contentType = "vide
       });
 
     if (error) {
-      console.error(`[Supabase Storage] [ERROR] Upload failed to '${bucketName}':`, error.message);
+      console.error(`[Supabase Storage] [ERROR] Upload failed to '${bucketName}/${folderName}':`, error.message);
       return null;
     }
 
@@ -344,7 +346,7 @@ export async function uploadVideoToStorage(buffer, fileName, contentType = "vide
       .getPublicUrl(filePath);
 
     const publicUrl = urlData?.publicUrl || "";
-    console.log(`[Supabase Storage] [SUCCESS] Uploaded ${cleanFileName} -> ${publicUrl}`);
+    console.log(`[Supabase Storage] [SUCCESS] Uploaded to [${folderName}] -> ${publicUrl}`);
 
     return {
       path: filePath,
@@ -353,6 +355,42 @@ export async function uploadVideoToStorage(buffer, fileName, contentType = "vide
   } catch (err) {
     console.error("[Supabase Storage] [ERROR] Exception uploading video:", err.message);
     return null;
+  }
+}
+
+/**
+ * List all video files within a specific category folder in Supabase Storage.
+ * @param {string} [category=""]
+ * @param {string} [bucketName="reels-media"]
+ * @returns {Promise<Array<Object>>}
+ */
+export async function listCategoryVideosFromStorage(category = "", bucketName = "reels-media") {
+  if (!supabase) return [];
+  try {
+    const folderPath = category ? category.trim() : "";
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .list(folderPath, {
+        limit: 100,
+        sortBy: { column: "created_at", order: "desc" },
+      });
+
+    if (error) {
+      console.error(`[Supabase Storage] [ERROR] Error listing folder '${folderPath}':`, error.message);
+      return [];
+    }
+
+    return (data || []).map((file) => ({
+      name: file.name,
+      id: file.id,
+      size: file.metadata?.size,
+      mimetype: file.metadata?.mimetype,
+      publicUrl: getPublicVideoUrl(`${folderPath ? folderPath + "/" : ""}${file.name}`, bucketName),
+      createdAt: file.created_at,
+    }));
+  } catch (err) {
+    console.error("[Supabase Storage] [ERROR] Exception listing storage files:", err.message);
+    return [];
   }
 }
 

@@ -209,6 +209,17 @@ export async function pollTelegramUpdates() {
 
         if (added) {
           console.log(`[Telegram Service] [SUCCESS] Seeded Reel into Supabase archive table under [${categoryName}]`);
+          
+          // Auto-backup video to Supabase Storage Category Folder
+          try {
+            console.log(`[Telegram Service] Uploading seeded video to Supabase Storage [${categoryName}] folder...`);
+            const videoBuffer = await downloadVideoBuffer(fileId);
+            if (videoBuffer) {
+              await uploadVideoToStorage(videoBuffer, `${fileId}.mp4`, "video/mp4", categoryName);
+            }
+          } catch (storageErr) {
+            console.warn(`[Telegram Service] [WARN] Supabase storage backup skipped:`, storageErr.message);
+          }
         }
       }
     }

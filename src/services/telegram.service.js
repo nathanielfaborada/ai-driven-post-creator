@@ -10,6 +10,7 @@ import {
   getRandomArchiveItem,
   markArchiveItemReposted,
   logArchiveStats,
+  uploadVideoToStorage,
 } from "./supabase.service.js";
 
 // Re-export Supabase-backed methods for jobs
@@ -120,6 +121,17 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
       caption: caption || "",
       fbVideoId: fbVideoId || null,
     });
+
+    // 6. Automatically backup video to Supabase Storage Category Folder
+    try {
+      console.log(`[Telegram Service] Uploading video to Supabase Storage [${category}] folder...`);
+      const videoBuffer = await downloadVideoBuffer(fileId);
+      if (videoBuffer) {
+        await uploadVideoToStorage(videoBuffer, `${fileId}.mp4`, "video/mp4", category);
+      }
+    } catch (storageErr) {
+      console.warn(`[Telegram Service] [WARN] Supabase storage backup skipped:`, storageErr.message);
+    }
 
     console.log(`[Telegram Service] [SUCCESS] Successfully archived reel under category: "${category}" in Supabase.`);
     await logArchiveStats();

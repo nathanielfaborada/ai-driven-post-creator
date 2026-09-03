@@ -14,7 +14,7 @@ import {
   uploadVideoToStorage,
 } from "./supabase.service.js";
 
-// Re-export Supabase-backed methods for jobs
+// Share database helper functions with the rest of the app
 export {
   getQueue,
   getArchive,
@@ -32,17 +32,12 @@ const tgClient = axios.create({
   timeout: 30000,
 });
 
-/**
- * Download video buffer directly from Telegram.
- * Enforces Telegram Bot API 20MB download limit.
- * @param {string} fileId
- * @returns {Promise<Buffer|null>}
- */
+// Download the video file from Telegram so we can upload it to Facebook, YouTube, and TikTok
 export async function downloadVideoBuffer(fileId) {
   if (!fileId) return null;
 
   try {
-    // 1. Get file path from Telegram
+    // 1. Ask Telegram for the file download path
     const fileRes = await tgClient.get("/getFile", {
       params: { file_id: fileId },
     });
@@ -58,7 +53,7 @@ export async function downloadVideoBuffer(fileId) {
       console.warn(`[Telegram Service] [WARN] Video file size (${(fileSize / (1024 * 1024)).toFixed(2)} MB) exceeds Telegram standard bot 20MB limit.`);
     }
 
-    // 2. Download the binary stream
+    // 2. Download the video as raw data
     const downloadUrl = `https://api.telegram.org/file/bot${config.telegram.botToken}/${filePath}`;
     const downloadRes = await axios.get(downloadUrl, {
       responseType: "arraybuffer",
@@ -73,22 +68,16 @@ export async function downloadVideoBuffer(fileId) {
   }
 }
 
-/**
- * Archive a published reel from Channel 1 to its respective Category Archive Channel and delete from Channel 1.
- * Persists record permanently in Supabase.
- * @param {Object} queueItem
- * @param {string} [fbVideoId]
- * @param {string} [category]
- */
+// Move a posted video from Channel 1 to its Category Archive channel and save it in Supabase
 export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category = "Human Biology & Anatomy") {
   const { messageId, fileId, caption } = queueItem;
 
   try {
-    // 1. Determine destination channel from 10-category archive channels
+    // 1. Find which Category Archive channel this belongs to
     const archiveChannels = config.telegram.archiveChannels || {};
     const destChannelId = archiveChannels[category] || archiveChannels["Human Biology & Anatomy"];
 
-    // 2. Copy message to respective Category Archive Channel in Telegram
+    // 2. Copy the video message to its Category Archive Channel in Telegram
     if (messageId && destChannelId && config.telegram.queueChannelId) {
       try {
         console.log(`[Telegram Service] Copying message ${messageId} to [${category}] Archive Channel (${destChannelId})...`);
@@ -101,7 +90,7 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
         console.warn(`[Telegram Service] [WARN] Could not copy message to Telegram archive channel:`, copyErr.response?.data || copyErr.message);
       }
 
-      // 3. Delete message from Queue Channel
+      // 3. Delete the video from Channel 1 so the queue stays clean
       try {
         console.log(`[Telegram Service] Deleting message ${messageId} from Queue Channel...`);
         await tgClient.post("/deleteMessage", {
@@ -113,10 +102,10 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
       }
     }
 
-    // 4. Remove from Supabase Queue table
+    // 4. Remove from queue table in database
     await removeFromQueue(messageId);
 
-    // 5. Add to Supabase Archive table
+    // 5. Save to archive table in database
     await addToArchive({
       fileId,
       category,
@@ -124,7 +113,7 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
       fbVideoId: fbVideoId || null,
     });
 
-    // 6. Automatically backup video to Supabase Storage Category Folder
+    // 6. Save a backup copy of the video in Supabase Storage
     try {
       console.log(`[Telegram Service] Uploading video to Supabase Storage [${category}] folder...`);
       const videoBuffer = await downloadVideoBuffer(fileId);
@@ -145,9 +134,7 @@ export async function archiveAndCleanupReel(queueItem, fbVideoId = "", category 
 let lastUpdateId = 0;
 let isPolling = false;
 
-/**
- * Process incoming Telegram updates across Queue Channel and all 10 Category Archive Channels.
- */
+// Check Telegram for new uploaded videos in the Queue channel or Category Archive channels
 export async function pollTelegramUpdates() {
   try {
     const res = await tgClient.post("/getUpdates", {
@@ -160,7 +147,7 @@ export async function pollTelegramUpdates() {
     const targetQueueId = config.telegram.queueChannelId ? String(config.telegram.queueChannelId) : null;
     const archiveChannels = config.telegram.archiveChannels || {};
 
-    // Invert mapping for fast lookup: ChatId -> CategoryName
+    // Map Telegram Channel IDs to Category names for quick lookup
     const channelToCategory = {};
     for (const [catName, cId] of Object.entries(archiveChannels)) {
       if (cId) {
@@ -182,7 +169,7 @@ export async function pollTelegramUpdates() {
       const fileId = video.file_id;
       const caption = post.caption || "";
 
-      // 1. Queue Channel (New uploads to be posted FIFO)
+      // 1. If uploaded to Channel 1 (Queue), add it to the posting queue
       if (targetQueueId && chatId === targetQueueId) {
         console.log(`\n[Telegram Service] [INFO] New Reel detected in Queue Channel (Msg ID: ${messageId})`);
         const added = await addToQueue({
@@ -198,7 +185,7 @@ export async function pollTelegramUpdates() {
         }
       }
 
-      // 2. Direct upload / seeding to any of the 10 Category Archive Channels
+      // 2. If uploaded directly into a Category Archive channel, save it directly to the archive library
       else if (channelToCategory[chatId]) {
         const categoryName = channelToCategory[chatId];
         console.log(`\n[Telegram Service] [INFO] Direct Reel seeded into [${categoryName}] Archive Channel (File ID: ${fileId.slice(-8)})`);
@@ -212,7 +199,7 @@ export async function pollTelegramUpdates() {
         if (added) {
           console.log(`[Telegram Service] [SUCCESS] Seeded Reel into Supabase archive table under [${categoryName}]`);
           
-          // Auto-backup video to Supabase Storage Category Folder
+          // Save backup copy to Supabase Storage
           try {
             console.log(`[Telegram Service] Uploading seeded video to Supabase Storage [${categoryName}] folder...`);
             const videoBuffer = await downloadVideoBuffer(fileId);
@@ -235,9 +222,7 @@ export async function pollTelegramUpdates() {
   }
 }
 
-/**
- * Start continuous background polling for new reels in Telegram channels.
- */
+// Start listening for new Telegram video uploads 24/7 in the background
 export function startTelegramListener() {
   if (isPolling) return;
   isPolling = true;

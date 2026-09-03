@@ -8,16 +8,13 @@ let refreshToken = process.env.TIKTOK_REFRESH_TOKEN;
 let cachedAccessToken = null;
 let tokenExpiresAt = 0;
 
-/**
- * Obtain a valid Access Token using the Refresh Token.
- * @returns {Promise<string|null>}
- */
+// Get or refresh our TikTok login access token
 export async function getTikTokAccessToken() {
   if (!clientKey || !clientSecret || !refreshToken) {
     return null;
   }
 
-  // Use cached token if valid (with 5-minute buffer)
+  // Use the saved token if it has not expired yet
   if (cachedAccessToken && Date.now() < tokenExpiresAt - 300000) {
     return cachedAccessToken;
   }
@@ -57,14 +54,7 @@ export async function getTikTokAccessToken() {
   }
 }
 
-/**
- * Publish a vertical video to TikTok using Content Posting API (Direct Post / Upload).
- * @param {Object} params
- * @param {Buffer} params.videoBuffer - Binary buffer of the video
- * @param {string} params.title - Caption/title with hashtags (Max 2200 chars)
- * @param {"PUBLIC_TO_EVERYONE"|"MUTUAL_FOLLOW_FRIENDS"|"SELF_ONLY"} [params.privacyLevel]
- * @returns {Promise<{ success: boolean, publishId?: string, error?: any }>}
- */
+// Upload and post a vertical video directly to TikTok
 export async function publishTikTokVideo({
   videoBuffer,
   title,
@@ -84,7 +74,7 @@ export async function publishTikTokVideo({
   try {
     console.log(`\n[TikTok Video] [INFO] Phase 1: Initializing TikTok upload session (${(videoBuffer.length / (1024 * 1024)).toFixed(2)} MB)...`);
 
-    // Clean caption and ensure trending hashtags
+    // Add hashtags if they are missing
     let cleanCaption = title.trim();
     if (!cleanCaption.toLowerCase().includes("#fyp")) {
       cleanCaption = `${cleanCaption} #fyp #foryou #ScienceTok #NanoFacts #STEM`;
@@ -92,7 +82,7 @@ export async function publishTikTokVideo({
 
     const effectivePrivacy = process.env.TIKTOK_PRIVACY_LEVEL || privacyLevel;
 
-    // Helper for initiating upload
+    // Helper function to ask TikTok to start an upload
     const initiateUpload = async (targetPrivacy) => {
       return await axios.post(
         "https://open.tiktokapis.com/v2/post/publish/video/init/",
@@ -121,7 +111,7 @@ export async function publishTikTokVideo({
       );
     };
 
-    // 1. Initialize Direct Post Upload (with unaudited fallback)
+    // Step 1: Start upload session (fall back to private video if the developer app is in sandbox mode)
     let initRes;
     try {
       initRes = await initiateUpload(effectivePrivacy);
@@ -143,7 +133,7 @@ export async function publishTikTokVideo({
       throw new Error(`Failed to get upload_url: ${JSON.stringify(initRes.data)}`);
     }
 
-    // 2. Upload Video Binary Chunk
+    // Step 2: Send the video bytes to TikTok's upload URL
     console.log(`[TikTok Video] [INFO] Phase 2: Transferring video binary (${videoBuffer.length} bytes)...`);
     await axios.put(uploadUrl, videoBuffer, {
       headers: {

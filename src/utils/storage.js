@@ -4,15 +4,12 @@ import path from "path";
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const REPLIED_FILE = path.join(DATA_DIR, "replied_comments.json");
 
-// Ensure data directory exists
+// Make sure the data folder exists on disk
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-/**
- * Load set of already replied comment IDs from file.
- * @returns {Set<string>}
- */
+// Read the list of comment IDs we already replied to so we do not reply twice
 export function getRepliedCommentIds() {
   try {
     if (fs.existsSync(REPLIED_FILE)) {
@@ -26,10 +23,7 @@ export function getRepliedCommentIds() {
   return new Set();
 }
 
-/**
- * Save a newly replied comment ID to local storage.
- * @param {string} commentId
- */
+// Save a comment ID to our file so we remember we already replied to it
 export function markCommentAsReplied(commentId) {
   try {
     const ids = getRepliedCommentIds();

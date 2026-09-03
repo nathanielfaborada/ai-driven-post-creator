@@ -15,10 +15,7 @@ export const supabase = (supabaseUrl && supabaseKey)
     })
   : null;
 
-/**
- * Check if Supabase client is connected and tables exist.
- * @returns {Promise<boolean>}
- */
+// Check if our Supabase database and storage bucket are connected and ready
 export async function testSupabaseConnection() {
   if (!supabase) {
     console.error("[Supabase Service] [ERROR] Supabase client is not initialized.");
@@ -34,7 +31,7 @@ export async function testSupabaseConnection() {
       return false;
     }
 
-    // Verify Storage Bucket
+    // Check if the video storage bucket is available
     try {
       const { data: bucketData, error: bError } = await supabase.storage.getBucket("reels-media");
       if (bError) {
@@ -43,7 +40,7 @@ export async function testSupabaseConnection() {
         console.log("[Supabase Storage] [SUCCESS] Storage bucket 'reels-media' is active and ready.");
       }
     } catch {
-      // Storage optional check
+      // Storage check is optional
     }
 
     console.log("[Supabase Service] [SUCCESS] Successfully connected to Supabase database (Tables: reels_queue, reels_archive ready).");
@@ -54,10 +51,7 @@ export async function testSupabaseConnection() {
   }
 }
 
-/**
- * Fetch all pending items from the Reels queue (FIFO order).
- * @returns {Promise<Array<Object>>}
- */
+// Get the list of videos waiting in the queue (oldest first)
 export async function getQueue() {
   if (!supabase) return [];
   try {
@@ -86,11 +80,7 @@ export async function getQueue() {
   }
 }
 
-/**
- * Add a new video reel to the pending queue.
- * @param {Object} item
- * @returns {Promise<boolean>}
- */
+// Add a new video upload to our database queue
 export async function addToQueue({ messageId, fileId, caption = "", fileSize = null, duration = null }) {
   if (!supabase) return false;
   try {
@@ -116,11 +106,7 @@ export async function addToQueue({ messageId, fileId, caption = "", fileSize = n
   }
 }
 
-/**
- * Remove a processed reel from the pending queue.
- * @param {number|string} messageId
- * @returns {Promise<boolean>}
- */
+// Delete a video from the queue once it has been posted
 export async function removeFromQueue(messageId) {
   if (!supabase) return false;
   try {
@@ -140,10 +126,7 @@ export async function removeFromQueue(messageId) {
   }
 }
 
-/**
- * Fetch all archived evergreen reels.
- * @returns {Promise<Array<Object>>}
- */
+// Get all saved videos from our 10-category archive library
 export async function getArchive() {
   if (!supabase) return [];
   try {
@@ -173,11 +156,7 @@ export async function getArchive() {
   }
 }
 
-/**
- * Add or update an archived reel with category and stats.
- * @param {Object} params
- * @returns {Promise<boolean>}
- */
+// Save a video into our permanent archive table with its category
 export async function addToArchive({ fileId, category = "General", caption = "", fbVideoId = null }) {
   if (!supabase) return false;
   try {
@@ -203,21 +182,14 @@ export async function addToArchive({ fileId, category = "General", caption = "",
   }
 }
 
-/**
- * Select the next archived reel strictly using:
- * 1. True Round-Robin across the 10 Categories (persisted via database last_reposted_at)
- * 2. Strict Repost Count Leveling (All videos must reach Repost Count N before ANY video reaches N+1)
- * 3. FIFO / Oldest-first tie-breaking among candidates in that tier
- * @param {number} [minThresholdPerCategory=10]
- * @returns {Promise<Object|null>}
- */
+// Pick the next video to repost using strict round-robin rotation across the 10 categories
 export async function getNextRoundRobinArchiveItem(minThresholdPerCategory = 10) {
   const archive = await getArchive();
   if (!archive || archive.length === 0) {
     return null;
   }
 
-  // Group items by category
+  // Group videos by category
   const categoriesMap = {};
   for (const item of archive) {
     const cat = item.category || "General";
@@ -225,7 +197,7 @@ export async function getNextRoundRobinArchiveItem(minThresholdPerCategory = 10)
     categoriesMap[cat].push(item);
   }
 
-  // Filter categories that meet the minimum threshold (e.g. 10 videos)
+  // Only consider categories that have reached our minimum video threshold (e.g. 10 videos)
   const statusLog = [];
   const qualifiedCategories = [];
 
@@ -249,8 +221,7 @@ export async function getNextRoundRobinArchiveItem(minThresholdPerCategory = 10)
     return null;
   }
 
-  // Determine which category to pick next via Round-Robin:
-  // Find the most recently reposted video across the entire archive
+  // Pick the next category in order (round-robin) based on which category was reposted last
   const repostedItems = archive
     .filter((item) => item.lastRepostedAt)
     .sort((a, b) => new Date(b.lastRepostedAt).getTime() - new Date(a.lastRepostedAt).getTime());
@@ -261,7 +232,6 @@ export async function getNextRoundRobinArchiveItem(minThresholdPerCategory = 10)
     const lastCategory = repostedItems[0].category;
     const lastIdx = qualifiedCategories.indexOf(lastCategory);
     if (lastIdx !== -1) {
-      // Advance to next category in round-robin sequence
       nextCategory = qualifiedCategories[(lastIdx + 1) % qualifiedCategories.length];
     }
   }
@@ -271,17 +241,14 @@ export async function getNextRoundRobinArchiveItem(minThresholdPerCategory = 10)
     return null;
   }
 
-  // STRICT REPOST COUNT LEVELING:
-  // 1. Find lowest repost count in this category (e.g. 0)
+  // Strict leveling: Only pick videos that have the lowest repost count in this category
   const minCount = Math.min(...categoryItems.map((item) => item.repostCount || 0));
 
-  // 2. Candidate pool: ONLY videos with repost_count === minCount
   const strictCandidates = categoryItems.filter(
     (item) => (item.repostCount || 0) === minCount
   );
 
-  // 3. FIFO / Oldest-first tie-breaking:
-  // If lastRepostedAt exists, pick the least recently reposted; else pick oldest originalPostedAt or lowest ID
+  // If multiple videos have the same count, pick the oldest one first
   strictCandidates.sort((a, b) => {
     const timeA = a.lastRepostedAt
       ? new Date(a.lastRepostedAt).getTime()
@@ -304,15 +271,11 @@ export async function getNextRoundRobinArchiveItem(minThresholdPerCategory = 10)
 // Backwards compatibility alias
 export const getRandomArchiveItem = getNextRoundRobinArchiveItem;
 
-/**
- * Increment repost count and update timestamp for an archived reel.
- * @param {string} fileId
- * @returns {Promise<boolean>}
- */
+// Increase the repost count by 1 and save the timestamp
 export async function markArchiveItemReposted(fileId) {
   if (!supabase) return false;
   try {
-    // 1. Fetch current count
+    // 1. Get current count
     const { data, error: fetchErr } = await supabase
       .from("reels_archive")
       .select("repost_count")
@@ -326,7 +289,7 @@ export async function markArchiveItemReposted(fileId) {
 
     const newCount = (data?.repost_count || 0) + 1;
 
-    // 2. Update repost count and timestamp
+    // 2. Save the new count and current time
     const { error: updateErr } = await supabase
       .from("reels_archive")
       .update({
@@ -347,9 +310,7 @@ export async function markArchiveItemReposted(fileId) {
   }
 }
 
-/**
- * Log live statistics of archived evergreen reels across all 10 categories with repost count tiers.
- */
+// Print a summary of how many videos we have in each category and their repost counts
 export async function logArchiveStats() {
   const archive = await getArchive();
   const categoryStats = {};
@@ -381,15 +342,7 @@ export async function logArchiveStats() {
   console.log(`=========================================\n`);
 }
 
-/**
- * Upload a video buffer or binary stream to Supabase Storage bucket under its category folder.
- * @param {Buffer} buffer
- * @param {string} fileName
- * @param {string} [contentType="video/mp4"]
- * @param {string} [category="General"]
- * @param {string} [bucketName="reels-media"]
- * @returns {Promise<{ publicUrl: string, path: string }|null>}
- */
+// Save a backup copy of the video file into Supabase Cloud Storage under its category folder
 export async function uploadVideoToStorage(buffer, fileName, contentType = "video/mp4", category = "General", bucketName = "reels-media") {
   if (!supabase || !buffer) return null;
   try {
@@ -426,12 +379,7 @@ export async function uploadVideoToStorage(buffer, fileName, contentType = "vide
   }
 }
 
-/**
- * List all video files within a specific category folder in Supabase Storage.
- * @param {string} [category=""]
- * @param {string} [bucketName="reels-media"]
- * @returns {Promise<Array<Object>>}
- */
+// Get a list of video files stored in a category folder
 export async function listCategoryVideosFromStorage(category = "", bucketName = "reels-media") {
   if (!supabase) return [];
   try {
@@ -462,24 +410,14 @@ export async function listCategoryVideosFromStorage(category = "", bucketName = 
   }
 }
 
-/**
- * Get the public CDN URL for a file in Supabase Storage.
- * @param {string} filePath
- * @param {string} [bucketName="reels-media"]
- * @returns {string}
- */
+// Get the direct web link for a video in Supabase Storage
 export function getPublicVideoUrl(filePath, bucketName = "reels-media") {
   if (!supabase || !filePath) return "";
   const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
   return data?.publicUrl || "";
 }
 
-/**
- * Delete a video file from Supabase Storage.
- * @param {string} filePath
- * @param {string} [bucketName="reels-media"]
- * @returns {Promise<boolean>}
- */
+// Delete a video file from Supabase Storage
 export async function deleteVideoFromStorage(filePath, bucketName = "reels-media") {
   if (!supabase || !filePath) return false;
   try {

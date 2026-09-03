@@ -14,9 +14,7 @@ import { publishTikTokVideo } from "../services/tiktok.service.js";
 import { generateReelCaptionNanoFacts, generateYouTubeShortsMetadata } from "../services/ai.service.js";
 import { toUnicodeBold } from "../utils/formatters.js";
 
-/**
- * Execute the Facebook Reels, YouTube Shorts and TikTok triple cross-posting pipeline.
- */
+// Publish a video reel to Facebook Reels, YouTube Shorts, and TikTok all at once
 export async function runReelsPublisherJob() {
   console.log("\n========================================================");
   console.log("[Reels Publisher] [INFO] Starting Multi-Platform (FB + YT + TikTok) Workflow...");
@@ -27,7 +25,7 @@ export async function runReelsPublisherJob() {
   const queue = await getQueue();
 
   if (queue.length > 0) {
-    // 1. Process FIFO item from queue (Top-most / oldest)
+    // Case 1: If there are new videos in the queue, post the oldest one first
     const nextItem = queue[0];
     console.log(`[Reels Publisher] [INFO] Found ${queue.length} item(s) in Queue. Picking first reel (Msg ID: ${nextItem.messageId})...`);
 
@@ -45,14 +43,14 @@ export async function runReelsPublisherJob() {
     console.log(`[Reels Publisher] [INFO] Category: [${category}] | Topic: ${topicName}`);
     console.log(`[Reels Publisher] [INFO] Final Facebook Caption:\n${finalCaption}\n`);
 
-    // Generate YouTube Shorts Metadata
+    // Prepare the title, description, and hashtags for YouTube Shorts
     const ytMeta = generateYouTubeShortsMetadata({
       topicName,
       category,
       rawTitle,
     });
 
-    // 1. Post to Facebook Reels
+    // 1. Upload to Facebook Reels
     console.log(`[Reels Publisher] [INFO] Publishing Reel to Facebook (Page ID: ${config.nanoFacts.pageId})...`);
     const fbRes = await publishFacebookReel({
       videoBuffer,
@@ -61,7 +59,7 @@ export async function runReelsPublisherJob() {
       pageToken: config.nanoFacts.pageToken,
     });
 
-    // 2. Cross-post to YouTube Shorts
+    // 2. Upload to YouTube Shorts
     let ytRes = { success: false, videoId: null };
     if (config.youtube?.clientId && config.youtube?.refreshToken) {
       console.log(`[Reels Publisher] [INFO] Cross-posting to YouTube Shorts: "${ytMeta.title}"...`);
@@ -74,7 +72,7 @@ export async function runReelsPublisherJob() {
       });
     }
 
-    // 3. Cross-post to TikTok
+    // 3. Upload to TikTok
     let ttRes = { success: false, publishId: null };
     if (config.tiktok?.clientKey && config.tiktok?.refreshToken) {
       console.log(`[Reels Publisher] [INFO] Cross-posting to TikTok: "${topicName || "Science Fact"}"...`);
@@ -92,7 +90,7 @@ export async function runReelsPublisherJob() {
       console.error("[Reels Publisher] [ERROR] Publishing failed across all platforms. Message kept in queue for retry.");
     }
   } else {
-    // 2. Fallback: Queue is empty -> Pick from Archive via Strict 10-Category Round-Robin (Requires at least 10 videos per category)
+    // Case 2: If the queue is empty, recycle an old video from the 10-category archive using strict round-robin
     const MIN_ARCHIVE_COUNT = 10;
     const archiveItem = await getNextRoundRobinArchiveItem(MIN_ARCHIVE_COUNT);
 
@@ -130,7 +128,7 @@ export async function runReelsPublisherJob() {
       pageToken: config.nanoFacts.pageToken,
     });
 
-    // 2. Cross-post to YouTube Shorts
+    // 2. Repost to YouTube Shorts
     let ytRes = { success: false, videoId: null };
     if (config.youtube?.clientId && config.youtube?.refreshToken) {
       console.log(`[Reels Publisher] [INFO] Reposting to YouTube Shorts: "${ytMeta.title}"...`);
@@ -143,7 +141,7 @@ export async function runReelsPublisherJob() {
       });
     }
 
-    // 3. Cross-post to TikTok
+    // 3. Repost to TikTok
     let ttRes = { success: false, publishId: null };
     if (config.tiktok?.clientKey && config.tiktok?.refreshToken) {
       console.log(`[Reels Publisher] [INFO] Reposting to TikTok: "${topicName || "Science Fact"}"...`);

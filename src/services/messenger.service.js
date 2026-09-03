@@ -3,14 +3,7 @@ import axios from "axios";
 const GRAPH_API_VERSION = "v26.0";
 const BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
-/**
- * Send a sender action to a user (e.g. typing_on, typing_off, mark_seen).
- * @param {Object} params
- * @param {string} params.recipientPsid - Page-scoped user ID
- * @param {"typing_on"|"typing_off"|"mark_seen"} [params.action]
- * @param {string} params.pageToken - Page Access Token
- * @returns {Promise<boolean>}
- */
+// Show a typing bubble or seen indicator in Messenger
 export async function sendSenderAction({ recipientPsid, action = "typing_on", pageToken }) {
   if (!recipientPsid || !pageToken) return false;
 
@@ -23,19 +16,12 @@ export async function sendSenderAction({ recipientPsid, action = "typing_on", pa
     });
     return true;
   } catch (err) {
-    // Non-critical, just ignore if sender action fails
+    // Ignore if sender action fails, it is not critical
     return false;
   }
 }
 
-/**
- * Send a direct text message reply via Facebook Messenger Send API.
- * @param {Object} params
- * @param {string} params.recipientPsid - Page-scoped user ID of the recipient
- * @param {string} params.messageText - Text message content to send
- * @param {string} params.pageToken - Facebook Page Access Token
- * @returns {Promise<string|null>} Message ID if successful, null if failed
- */
+// Send a direct message reply in Facebook Messenger
 export async function sendMessengerReply({ recipientPsid, messageText, pageToken }) {
   if (!recipientPsid || !messageText || !pageToken) {
     console.error("[Messenger] [ERROR] Missing recipientPsid, messageText, or pageToken.");
@@ -60,13 +46,7 @@ export async function sendMessengerReply({ recipientPsid, messageText, pageToken
   }
 }
 
-/**
- * Optionally fetch user's basic profile details (e.g. first_name).
- * @param {Object} params
- * @param {string} params.userPsid
- * @param {string} params.pageToken
- * @returns {Promise<{ first_name?: string, last_name?: string, name?: string }|null>}
- */
+// Grab the user's name so the AI can greet them politely
 export async function getUserProfile({ userPsid, pageToken }) {
   if (!userPsid || !pageToken) return null;
 

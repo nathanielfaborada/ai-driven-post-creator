@@ -22,7 +22,7 @@ const GEMINI_MODELS = [
   "gemini-flash-lite-latest",
 ];
 
-// Key rotation state
+// Track which Gemini API key is currently active
 let currentKeyIndex = 0;
 const apiKeys = config.gemini?.apiKeys || [];
 
@@ -32,9 +32,7 @@ if (apiKeys.length === 0) {
   console.log(`[AI Service] [INFO] Initialized Gemini Pool with ${apiKeys.length} API key(s) (Round-Robin, Model Fallback & Auto-Failover Enabled).`);
 }
 
-/**
- * Get current status of the key pool.
- */
+// Helper to see how many API keys we have and which one is active
 export function getKeyPoolStatus() {
   return {
     totalKeys: apiKeys.length,
@@ -44,16 +42,7 @@ export function getKeyPoolStatus() {
   };
 }
 
-/**
- * Execute Gemini generateContent with:
- * 1. Round-Robin API Key rotation (across 10 keys)
- * 2. Instant Model Fallback on 503 High Demand / Server Spikes
- * 3. Key Failover on 429 Quota Limits
- * @param {Object} options
- * @param {string} options.contents - The prompt text/contents
- * @param {string} [options.taskName] - Descriptive name for logging
- * @returns {Promise<string>} Generated text
- */
+// Call Gemini AI while rotating through our API keys and models if one gets busy or rate-limited
 async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
   if (apiKeys.length === 0) {
     throw new Error("No Gemini API keys configured. Please check your .env file.");
@@ -104,10 +93,7 @@ async function executeGeminiWithRotation({ contents, taskName = "AI Task" }) {
   throw new Error(`All Gemini models and keys exhausted. Last error: ${lastError?.message}`);
 }
 
-/**
- * Generate MLBB Facebook Post Caption for Asta Plays.
- * @returns {Promise<{ heroName: string|null, caption: string|null }>}
- */
+// Ask Gemini AI to write a short Mobile Legends post for Asta Plays
 export async function generateCaptionAstaPlays() {
   try {
     const text = await executeGeminiWithRotation({
@@ -167,10 +153,7 @@ export async function generateCaptionAstaPlays() {
   }
 }
 
-/**
- * Generate Science & Technology Facebook Post Caption for Nano Facts with Subscription CTA.
- * @returns {Promise<{ topicName: string|null, elementName: string|null, caption: string|null }>}
- */
+// Ask Gemini AI to write an educational science post for Nano Facts
 export async function generateCaptionNanoFacts() {
   try {
     const text = await executeGeminiWithRotation({
@@ -240,11 +223,7 @@ export async function generateCaptionNanoFacts() {
   }
 }
 
-/**
- * Classify a science topic or caption into one of the 10 official categories.
- * @param {string} text - Topic or text to classify
- * @returns {Promise<string>} Category name
- */
+// Figure out which of our 10 science categories a topic belongs to
 export async function classifyReelCategory(text = "") {
   if (!text || !text.trim()) {
     return "Human Biology & Anatomy";
@@ -284,7 +263,7 @@ export async function classifyReelCategory(text = "") {
     return "Rocket Science & Space Missions";
   }
 
-  // AI fallback classification if ambiguous
+  // Ask AI to pick a category if keyword matching was not sure
   try {
     const rawCategory = await executeGeminiWithRotation({
       taskName: "Reel Category Classification",
@@ -305,11 +284,7 @@ export async function classifyReelCategory(text = "") {
   }
 }
 
-/**
- * Generate an AI-powered SEO & engagement caption for Facebook Reels based on incoming Telegram caption/topic.
- * @param {string} [initialTopic] - Topic or raw caption provided via Telegram
- * @returns {Promise<{ topicName: string|null, rawTitle: string|null, caption: string|null, category: string }>}
- */
+// Create an engaging video caption and pick the right science category for a new reel
 export async function generateReelCaptionNanoFacts(initialTopic = "") {
   try {
     const topicPrompt = initialTopic?.trim()
@@ -383,14 +358,7 @@ export async function generateReelCaptionNanoFacts(initialTopic = "") {
   }
 }
 
-/**
- * Generate YouTube Shorts specific title, description, and tags based on video topic.
- * @param {Object} params
- * @param {string} [params.topicName]
- * @param {string} [params.category]
- * @param {string} [params.rawTitle]
- * @returns {{ title: string, description: string, tags: string[] }}
- */
+// Build titles and hashtags formatted specifically for YouTube Shorts
 export function generateYouTubeShortsMetadata({ topicName = "Science Fact", category = "Science", rawTitle = null }) {
   const cleanCategory = (category || "Science").replace(/[^a-zA-Z0-9]/g, "");
   const baseTitle = rawTitle || topicName || "Mind-Blowing Science Discovery";
@@ -424,15 +392,7 @@ Subscribe to our channel for more daily science, physics, biology and space fact
   return { title, description, tags };
 }
 
-/**
- * Generate an AI response to a user's Facebook comment.
- * @param {Object} params
- * @param {string} params.userComment
- * @param {string} [params.postTopic]
- * @param {"astaPlays"|"nanoFacts"} [params.page]
- * @param {string|null} [params.userName]
- * @returns {Promise<string|null>}
- */
+// Create a friendly, natural AI reply to someone who commented on our post
 export async function generateCommentReply({ userComment, postTopic = "our Facebook page", page = "astaPlays", userName = null }) {
   try {
     const persona = page === "nanoFacts"
@@ -464,14 +424,7 @@ export async function generateCommentReply({ userComment, postTopic = "our Faceb
   }
 }
 
-/**
- * Generate an AI direct message response for 1-on-1 Facebook Messenger chat.
- * @param {Object} params
- * @param {string} params.userMessage
- * @param {"astaPlays"|"nanoFacts"} [params.page]
- * @param {string|null} [params.userName]
- * @returns {Promise<string|null>}
- */
+// Create an AI reply for private Facebook Messenger chats
 export async function generateMessengerChatReply({ userMessage, page = "astaPlays", userName = null }) {
   try {
     const personaDescription = page === "nanoFacts"

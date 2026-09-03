@@ -2,9 +2,7 @@ import { generateCaptionNanoFacts } from "../services/ai.service.js";
 import { postToFacebook } from "../services/facebook.service.js";
 import { config } from "../config/env.js";
 
-/**
- * Execute the Nano Facts posting workflow.
- */
+// Generate an AI science fact for Nano Facts and publish it to Facebook
 export async function runNanoJob() {
   console.log("\n[Nano Facts] Generating caption...");
   const { topicName, elementName, caption } = await generateCaptionNanoFacts();

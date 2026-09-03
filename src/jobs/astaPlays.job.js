@@ -2,9 +2,7 @@ import { generateCaptionAstaPlays } from "../services/ai.service.js";
 import { postToFacebook } from "../services/facebook.service.js";
 import { config } from "../config/env.js";
 
-/**
- * Execute the Asta Plays posting workflow.
- */
+// Generate an AI gaming post for Asta Plays and publish it to Facebook
 export async function runAstaJob() {
   console.log("\n[Asta Plays] Generating caption...");
   const { heroName, caption } = await generateCaptionAstaPlays();

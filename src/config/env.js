@@ -1,14 +1,10 @@
 import "dotenv/config";
 
-/**
- * Dynamically extract all Gemini API keys from environment variables.
- * Discovers GEMINI_PROJECT_1, GEMINI_PROJECT_2, ..., and any GEMINI_API_KEY variants.
- * @returns {string[]} List of valid API keys
- */
+// Find and collect all Gemini API keys from the .env file so we can rotate them
 function getGeminiApiKeys() {
   const keys = [];
 
-  // 1. Collect sequential GEMINI_PROJECT_1..50
+  // Grab keys named GEMINI_PROJECT_1 up to GEMINI_PROJECT_50
   for (let i = 1; i <= 50; i++) {
     const key = process.env[`GEMINI_PROJECT_${i}`];
     if (key && key.trim()) {
@@ -16,7 +12,7 @@ function getGeminiApiKeys() {
     }
   }
 
-  // 2. Collect any other GEMINI_PROJECT_* or GEMINI_API_KEY_* definitions
+  // Also grab any other custom Gemini keys in the .env file
   for (const [envKey, envVal] of Object.entries(process.env)) {
     if (
       (envKey.startsWith("GEMINI_PROJECT_") || envKey.startsWith("GEMINI_API_KEY")) &&
@@ -28,7 +24,7 @@ function getGeminiApiKeys() {
     }
   }
 
-  // 3. Fallback for legacy single key if present
+  // Add the basic single GEMINI_API_KEY if it exists
   if (process.env.GEMINI_API_KEY && !keys.includes(process.env.GEMINI_API_KEY.trim())) {
     keys.push(process.env.GEMINI_API_KEY.trim());
   }
@@ -66,7 +62,7 @@ export const config = {
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
     queueChannelId: process.env.TELEGRAM_CHANNEL_QUEUE_ID,
-    // 10-Channel Category Archive Mapping
+    // Telegram Channel IDs for our 10 science categories
     archiveChannels: {
       "Human Biology & Anatomy": process.env.TG_CHANNEL_BIOLOGY_ID || process.env.TELEGRAM_CHANNEL_ARCHIVE_BIOLOGY_ID,
       "Chemistry & Periodic Table": process.env.TG_CHANNEL_CHEMISTRY_ID || process.env.TELEGRAM_CHANNEL_ARCHIVE_PERIODIC_ID,

@@ -8,22 +8,13 @@ const boldMap = {
   0: "𝟬", 1: "𝟭", 2: "𝟮", 3: "𝟯", 4: "𝟰", 5: "𝟱", 6: "𝟲", 7: "𝟳", 8: "𝟴", 9: "𝟵",
 };
 
-/**
- * Convert any string directly to Unicode bold characters.
- * @param {string} str
- * @returns {string}
- */
+// Turn normal letters and numbers into bold Unicode text
 export function stringToUnicodeBold(str) {
   if (!str) return "";
   return str.split("").map((ch) => boldMap[ch] || ch).join("");
 }
 
-/**
- * Convert markdown bold **text** or __text__ to Unicode bold characters for Facebook.
- * Also bolds key section headlines (e.g., Level Up Your Game, Unlock The Nano Facts Science Library).
- * @param {string} str
- * @returns {string}
- */
+// Convert markdown asterisks like **bold** into Facebook-compatible bold letters
 export function toUnicodeBold(str) {
   if (!str) return "";
 
@@ -33,7 +24,7 @@ export function toUnicodeBold(str) {
   // 2. Convert __text__ to bold
   result = result.replace(/__(.+?)__/g, (_, inner) => stringToUnicodeBold(inner));
 
-  // 3. Convert specific known header lines if present
+  // 3. Make known section titles bold automatically
   result = result.replace(/(?:^|\n)(Level Up Your Game)/gi, (_, text) => `\n${stringToUnicodeBold(text)}`);
   result = result.replace(/(?:^|\n)(Unlock The Nano Facts Science Library)/gi, (_, text) => `\n${stringToUnicodeBold(text)}`);
   result = result.replace(/(?:^|\n)(Learn Science in Seconds)/gi, (_, text) => `\n${stringToUnicodeBold(text)}`);

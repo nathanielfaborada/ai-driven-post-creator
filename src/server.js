@@ -6,7 +6,7 @@ import { generateMessengerChatReply } from "./services/ai.service.js";
 const app = express();
 app.use(express.json());
 
-// In-memory cache to prevent duplicate processing of the same message ID
+// Remember message IDs so we do not reply to the exact same message twice
 const processedMessageIds = new Set();
 
 function isMessageProcessed(mid) {
@@ -14,7 +14,7 @@ function isMessageProcessed(mid) {
   if (processedMessageIds.has(mid)) return true;
   processedMessageIds.add(mid);
 
-  // Keep set size bounded
+  // Keep the memory clean by removing very old message IDs
   if (processedMessageIds.size > 2000) {
     const oldestKey = processedMessageIds.values().next().value;
     processedMessageIds.delete(oldestKey);
@@ -22,9 +22,7 @@ function isMessageProcessed(mid) {
   return false;
 }
 
-/**
- * Health check & status endpoint.
- */
+// Basic test page to see if the server is running
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "online",
@@ -33,10 +31,7 @@ app.get("/", (req, res) => {
   });
 });
 
-/**
- * GET /webhook (and /webhooks)
- * Verification endpoint for Meta Webhook setup (Hub Challenge Handshake).
- */
+// Facebook webhook verification to confirm our server with Meta
 app.get(["/webhook", "/webhooks"], (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
@@ -53,10 +48,7 @@ app.get(["/webhook", "/webhooks"], (req, res) => {
   }
 });
 
-/**
- * POST /webhook (and /webhooks)
- * Receives real-time events from Meta (Messages, Postbacks, etc.).
- */
+// Receive incoming Facebook messages and events sent by Meta
 app.post(["/webhook", "/webhooks"], (req, res) => {
   const body = req.body;
 
@@ -64,7 +56,7 @@ app.post(["/webhook", "/webhooks"], (req, res) => {
     return res.sendStatus(404);
   }
 
-  // Acknowledge Meta immediately (must respond within 5 seconds)
+  // Answer Meta right away so they know we got the message
   res.status(200).send("EVENT_RECEIVED");
 
   const entries = body.entry || [];
@@ -78,33 +70,30 @@ app.post(["/webhook", "/webhooks"], (req, res) => {
   }
 });
 
-/**
- * Process incoming 1-on-1 Messenger chat events.
- * @param {Object} event - Meta messaging webhook event
- */
+// Read incoming private Facebook Messenger messages and write AI replies
 async function handleMessagingEvent(event) {
   const senderPsid = event.sender?.id;
   const recipientPageId = event.recipient?.id;
   const message = event.message;
 
-  // 1. Skip if no message or if it is an echo (sent by the page itself)
+  // 1. Skip if no message or if it is our own page talking
   if (!message || message.is_echo) {
     return;
   }
 
-  // 2. Skip duplicate deliveries
+  // 2. Skip if we already handled this message
   if (isMessageProcessed(message.mid)) {
     return;
   }
 
-  // 3. Extract text message
+  // 3. Get the text message
   const userText = message.text?.trim();
   if (!userText) {
     console.log(`[Messenger] Received non-text message/attachment from PSID ${senderPsid}. Skipping.`);
     return;
   }
 
-  // 4. Match recipient Page ID to configure correct Page persona & token
+  // 4. Find which Facebook page the message was sent to
   let pageKey = null;
   let pageTitle = null;
   let pageConfig = null;
@@ -129,21 +118,21 @@ async function handleMessagingEvent(event) {
 
   console.log(`\n[Messenger] [INFO] New message on ${pageTitle} from PSID ${senderPsid}: "${userText}"`);
 
-  // 5. Send "typing..." indicator to Messenger
+  // 5. Show typing bubble in Messenger
   await sendSenderAction({
     recipientPsid: senderPsid,
     action: "typing_on",
     pageToken: pageConfig.pageToken,
   });
 
-  // 6. Fetch user's first name if permitted
+  // 6. Get the user's first name to greet them
   const profile = await getUserProfile({
     userPsid: senderPsid,
     pageToken: pageConfig.pageToken,
   });
   const userName = profile?.first_name || null;
 
-  // 7. Generate contextual AI reply
+  // 7. Ask AI to write a helpful reply
   const aiReply = await generateMessengerChatReply({
     userMessage: userText,
     page: pageKey,
@@ -157,10 +146,10 @@ async function handleMessagingEvent(event) {
 
   console.log(`[Messenger] [INFO] AI Response for ${pageTitle}:\n"${aiReply}"`);
 
-  // 8. Natural pause of 1.5s for realistic conversation pacing
+  // 8. Short 1.5s pause so it feels natural like a real person typing
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  // 9. Send the reply via Messenger Send API
+  // 9. Send the AI reply back to the user
   await sendMessengerReply({
     recipientPsid: senderPsid,
     messageText: aiReply,
@@ -168,9 +157,7 @@ async function handleMessagingEvent(event) {
   });
 }
 
-/**
- * Start the Express Webhook server.
- */
+// Turn on the web server
 export function startServer() {
   const port = Number(process.env.PORT) || config.server.port || 8080;
   app.listen(port, "0.0.0.0", () => {

@@ -3,16 +3,7 @@ import axios from "axios";
 const GRAPH_API_VERSION = "v26.0";
 const BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
-/**
- * Post a photo or text caption to Facebook Page Feed.
- * @param {Object} params
- * @param {string} params.caption
- * @param {string|null} [params.imageUrl]
- * @param {Buffer|null} [params.imageBuffer]
- * @param {string} params.pageId
- * @param {string} params.pageToken
- * @returns {Promise<string|null>} Created Post ID
- */
+// Post a text caption or photo to our Facebook page
 export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, pageToken }) {
   if (!caption) {
     console.log("[Facebook Service] No caption generated, skipping post.");
@@ -25,7 +16,7 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
 
   try {
     if (imageBuffer) {
-      // Post with raw image Buffer from Google Imagen
+      // Upload image directly if we have raw image data
       const formData = new FormData();
       formData.append("source", new Blob([imageBuffer], { type: "image/jpeg" }), "image.jpg");
       formData.append("message", caption);
@@ -36,7 +27,7 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
       console.log("[Facebook Service] [SUCCESS] Posted with image. Post ID:", res.data.id);
       return res.data.id;
     } else if (imageUrl) {
-      // Post with image URL using Photos API
+      // Upload image using a web link
       const url = `${BASE_URL}/${pageId}/photos`;
       const res = await axios.post(url, {
         url: imageUrl,
@@ -46,7 +37,7 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
       console.log("[Facebook Service] [SUCCESS] Posted with image. Post ID:", res.data.id);
       return res.data.id;
     } else {
-      // Fallback: post text only
+      // Post simple plain text if there is no image
       const url = `${BASE_URL}/${pageId}/feed`;
       const res = await axios.post(url, {
         message: caption,
@@ -61,14 +52,7 @@ export async function postToFacebook({ caption, imageUrl, imageBuffer, pageId, p
   }
 }
 
-/**
- * Fetch recent posts (including feed posts and video reels) along with their comments for a Facebook Page.
- * @param {Object} params
- * @param {string} params.pageId
- * @param {string} params.pageToken
- * @param {number} [params.limit]
- * @returns {Promise<Array>} Array of posts and videos with comments
- */
+// Grab recent Facebook posts and their comment threads so we can reply
 export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10 }) {
   if (!pageId || !pageToken) {
     console.error("[Facebook Service] Missing pageId or pageToken for fetching comments.");
@@ -77,7 +61,7 @@ export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10
 
   const postsMap = new Map();
 
-  // 1. Fetch Feed posts (Status, Photos, Shared Posts)
+  // 1. Check regular wall posts and photos
   try {
     const feedUrl = `${BASE_URL}/${pageId}/feed`;
     const res = await axios.get(feedUrl, {
@@ -98,7 +82,7 @@ export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10
     console.error(`[Facebook Service] Error fetching feed posts for page ${pageId}:`, err.response?.data || err.message);
   }
 
-  // 2. Fetch Video / Reels posts (Facebook Reels and uploaded videos)
+  // 2. Check Facebook Reels and video posts
   try {
     const videosUrl = `${BASE_URL}/${pageId}/videos`;
     const res = await axios.get(videosUrl, {
@@ -125,14 +109,7 @@ export async function getRecentPostsWithComments({ pageId, pageToken, limit = 10
   return Array.from(postsMap.values());
 }
 
-/**
- * Reply to a specific Facebook comment.
- * @param {Object} params
- * @param {string} params.commentId
- * @param {string} params.message
- * @param {string} params.pageToken
- * @returns {Promise<string|null>} Created Reply Comment ID
- */
+// Post an answer to a specific comment on Facebook
 export async function replyToComment({ commentId, message, pageToken }) {
   if (!commentId || !message || !pageToken) {
     console.error("[Facebook Service] Missing commentId, message, or pageToken for reply.");
@@ -153,15 +130,7 @@ export async function replyToComment({ commentId, message, pageToken }) {
   }
 }
 
-/**
- * Publish a video Reel to a Facebook Page using the 3-step Reels API.
- * @param {Object} params
- * @param {Buffer} params.videoBuffer - Binary buffer of the video file
- * @param {string} [params.caption] - Caption/description of the reel
- * @param {string} params.pageId - Facebook Page ID
- * @param {string} params.pageToken - Facebook Page Access Token
- * @returns {Promise<{ success: boolean, videoId: string|null, error?: any }>}
- */
+// Upload and publish a video Reel to Facebook using Meta's 3-step Reels upload process
 export async function publishFacebookReel({ videoBuffer, caption = "", pageId, pageToken }) {
   if (!videoBuffer || !pageId || !pageToken) {
     console.error("[FB Reels] [ERROR] Missing required params (videoBuffer, pageId, or pageToken).");
@@ -169,6 +138,7 @@ export async function publishFacebookReel({ videoBuffer, caption = "", pageId, p
   }
 
   try {
+    // Phase 1: Ask Facebook to start a new Reels upload session
     console.log("[FB Reels] [INFO] Phase 1: Initializing Reels upload session...");
     const initRes = await axios.post(`${BASE_URL}/${pageId}/video_reels`, {
       upload_phase: "start",
@@ -180,6 +150,7 @@ export async function publishFacebookReel({ videoBuffer, caption = "", pageId, p
       throw new Error(`Failed to initialize upload session: ${JSON.stringify(initRes.data)}`);
     }
 
+    // Phase 2: Send the video file data to Facebook's upload URL
     console.log(`[FB Reels] [INFO] Session initialized. Video ID: ${video_id}. Phase 2: Uploading ${videoBuffer.length} bytes...`);
     await axios.post(upload_url, videoBuffer, {
       headers: {
@@ -192,6 +163,7 @@ export async function publishFacebookReel({ videoBuffer, caption = "", pageId, p
       maxContentLength: Infinity,
     });
 
+    // Phase 3: Tell Facebook to publish the reel with our caption
     console.log("[FB Reels] [INFO] Phase 3: Finishing and publishing Reel...");
     const finishRes = await axios.post(`${BASE_URL}/${pageId}/video_reels`, {
       upload_phase: "finish",

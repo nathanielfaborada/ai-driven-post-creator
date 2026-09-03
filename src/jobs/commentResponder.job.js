@@ -3,27 +3,16 @@ import { generateCommentReply } from "../services/ai.service.js";
 import { getRepliedCommentIds, markCommentAsReplied } from "../utils/storage.js";
 import { config } from "../config/env.js";
 
-// Only reply to comments created in the last 24 hours
+// Only reply to comments posted within the last 24 hours
 const MAX_COMMENT_AGE_HOURS = 24;
 
-/**
- * Generate a random human-like delay between min and max seconds.
- * @param {number} minSec 
- * @param {number} maxSec 
- * @returns {number} Delay in milliseconds
- */
+// Wait a random number of seconds (40 to 75s) so our replies look natural like a real person
 function getRandomDelay(minSec = 40, maxSec = 75) {
   const seconds = Math.floor(Math.random() * (maxSec - minSec + 1)) + minSec;
   return seconds * 1000;
 }
 
-/**
- * Process unreplied comments for a specific Facebook Page.
- * @param {Object} params
- * @param {string} params.pageKey - Key in config (e.g. "astaPlays" or "nanoFacts")
- * @param {string} params.pageTitle - Display name for logging
- * @param {string} params.postTopic - General topic context for AI
- */
+// Check recent posts for a Facebook page, find comments, and write AI replies
 async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
   const pageConfig = config[pageKey];
   if (!pageConfig?.pageId || !pageConfig?.pageToken) {
@@ -47,18 +36,18 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
         const commentMessage = comment.message?.trim();
         const commenterId = comment.from?.id;
 
-        // 1. Skip if already replied in our local database
+        // Skip if we already replied to this comment before
         if (repliedIds.has(commentId)) {
           continue;
         }
 
-        // 2. Skip if comment is from the page itself
+        // Do not reply to our own page's comments
         if (commenterId && commenterId === pageConfig.pageId) {
           markCommentAsReplied(commentId);
           continue;
         }
 
-        // 3. Skip if there is already a sub-comment reply from the page
+        // Skip if the page already answered under this thread
         const subComments = comment.comments?.data || [];
         const alreadyAnsweredByPage = subComments.some(
           (sub) => sub.from?.id === pageConfig.pageId
@@ -68,13 +57,13 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
           continue;
         }
 
-        // 4. Skip empty comments (e.g., sticker only or GIF without text)
+        // Skip stickers or blank comments with no text
         if (!commentMessage) {
           markCommentAsReplied(commentId);
           continue;
         }
 
-        // 5. Time Filter: Skip comments older than 24 hours
+        // Ignore old comments made more than 24 hours ago
         if (comment.created_time) {
           const commentAgeHours = (Date.now() - new Date(comment.created_time).getTime()) / (1000 * 60 * 60);
           if (commentAgeHours > MAX_COMMENT_AGE_HOURS) {
@@ -85,13 +74,13 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
 
         console.log(`\n[Comment Responder] [INFO] New comment on ${pageTitle} by ${comment.from?.name || "User"}: "${commentMessage}"`);
 
-        // Human-paced natural delay before posting the reply (40 - 75 seconds)
+        // Wait between 40 to 75 seconds before posting so it does not look like an instant bot
         const delayMs = getRandomDelay(40, 75);
         const delaySec = Math.round(delayMs / 1000);
         console.log(`[Comment Responder] [INFO] Waiting ${delaySec}s before replying to maintain natural human pacing...`);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
 
-        // 6. Generate AI response
+        // Ask Gemini AI to write a friendly reply
         const aiReply = await generateCommentReply({
           userComment: commentMessage,
           postTopic: postCaption,
@@ -102,7 +91,7 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
         if (aiReply) {
           console.log(`[${pageTitle}] AI generated response:\n"${aiReply}"`);
           
-          // 7. Post reply to Facebook
+          // Post the reply to Facebook
           const replyId = await replyToComment({
             commentId,
             message: aiReply,
@@ -123,9 +112,7 @@ async function processCommentsForPage({ pageKey, pageTitle, postTopic }) {
 
 let isProcessing = false;
 
-/**
- * Main job runner to check and reply to comments across all managed pages in parallel.
- */
+// Check for new comments across both Asta Plays and Nano Facts at the same time
 export async function runCommentResponderJob() {
   if (isProcessing) {
     console.log("[Comment Responder] Job is already running, skipping this tick...");

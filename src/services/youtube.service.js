@@ -30,10 +30,7 @@ if (clientId && clientSecret && refreshToken) {
   console.warn("[YouTube Service] [WARN] Missing YouTube OAuth2 credentials in configuration.");
 }
 
-/**
- * Verify YouTube Channel connection and fetch basic channel info.
- * @returns {Promise<{ success: boolean, channelTitle?: string, customUrl?: string, error?: string }>}
- */
+// Check if our YouTube channel is connected and get its name
 export async function verifyYouTubeConnection() {
   if (!youtube) {
     return { success: false, error: "YouTube client not initialized. Missing credentials." };
@@ -69,16 +66,7 @@ export async function verifyYouTubeConnection() {
   }
 }
 
-/**
- * Upload and publish a vertical short video to YouTube Shorts.
- * @param {Object} params
- * @param {Buffer} params.videoBuffer - Binary buffer of the video file
- * @param {string} params.title - Title of the YouTube Short (Max 100 chars, includes #Shorts)
- * @param {string} [params.description] - Description of the video
- * @param {string[]} [params.tags] - Array of SEO keyword tags
- * @param {"public"|"unlisted"|"private"} [params.privacyStatus] - Video privacy
- * @returns {Promise<{ success: boolean, videoId: string|null, url?: string, error?: any }>}
- */
+// Upload and publish a vertical video directly to YouTube Shorts
 export async function publishYouTubeShort({
   videoBuffer,
   title,
@@ -97,12 +85,12 @@ export async function publishYouTubeShort({
   }
 
   try {
-    // Ensure title contains #Shorts for automatic YouTube Shorts categorization
+    // Make sure the title has #Shorts at the end so YouTube treats it as a Short
     let shortTitle = title.trim();
     if (!shortTitle.toLowerCase().includes("#shorts")) {
       shortTitle = `${shortTitle} #Shorts`;
     }
-    // Enforce YouTube 100 character limit on title
+    // Keep the title under 100 characters so YouTube does not reject it
     if (shortTitle.length > 100) {
       shortTitle = shortTitle.slice(0, 92).trim() + " #Shorts";
     }

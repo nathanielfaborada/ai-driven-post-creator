@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "../config/env.js";
+import { SCIENCE_CATEGORIES } from "./ai.service.js";
 
 const supabaseUrl = config.supabase?.url;
 const supabaseKey = config.supabase?.key;
@@ -203,51 +204,105 @@ export async function addToArchive({ fileId, category = "General", caption = "",
 }
 
 /**
- * Select a random reel from eligible archive categories that meet the minimum threshold.
- * Prioritizes reels with the lowest repost count.
+ * Select the next archived reel strictly using:
+ * 1. True Round-Robin across the 10 Categories (persisted via database last_reposted_at)
+ * 2. Strict Repost Count Leveling (All videos must reach Repost Count N before ANY video reaches N+1)
+ * 3. FIFO / Oldest-first tie-breaking among candidates in that tier
  * @param {number} [minThresholdPerCategory=10]
  * @returns {Promise<Object|null>}
  */
-export async function getRandomArchiveItem(minThresholdPerCategory = 10) {
+export async function getNextRoundRobinArchiveItem(minThresholdPerCategory = 10) {
   const archive = await getArchive();
   if (!archive || archive.length === 0) {
     return null;
   }
 
   // Group items by category
-  const categories = {};
+  const categoriesMap = {};
   for (const item of archive) {
     const cat = item.category || "General";
-    if (!categories[cat]) categories[cat] = [];
-    categories[cat].push(item);
+    if (!categoriesMap[cat]) categoriesMap[cat] = [];
+    categoriesMap[cat].push(item);
   }
 
-  // Filter categories that meet the threshold
-  const eligibleItems = [];
+  // Filter categories that meet the minimum threshold (e.g. 10 videos)
   const statusLog = [];
+  const qualifiedCategories = [];
 
-  for (const [catName, items] of Object.entries(categories)) {
+  const allKnownCategories = [
+    ...SCIENCE_CATEGORIES,
+    ...Object.keys(categoriesMap).filter((c) => !SCIENCE_CATEGORIES.includes(c)),
+  ];
+
+  for (const catName of allKnownCategories) {
+    const items = categoriesMap[catName] || [];
     if (items.length >= minThresholdPerCategory) {
-      eligibleItems.push(...items);
+      qualifiedCategories.push(catName);
       statusLog.push(`${catName}: ${items.length} items (Qualified >= ${minThresholdPerCategory})`);
-    } else {
+    } else if (items.length > 0) {
       statusLog.push(`${catName}: ${items.length}/${minThresholdPerCategory} items (Need ${minThresholdPerCategory - items.length} more)`);
     }
   }
 
-  if (eligibleItems.length === 0) {
+  if (qualifiedCategories.length === 0) {
     console.log(`[Supabase Service] [INFO] Archive Threshold Status:\n  - ${statusLog.join("\n  - ")}\n  No category has reached the minimum ${minThresholdPerCategory} videos yet.`);
     return null;
   }
 
-  // Sort eligible items by repostCount (ascending) so least reposted are favored, then shuffle among top candidates
-  const sorted = [...eligibleItems].sort((a, b) => (a.repostCount || 0) - (b.repostCount || 0));
-  const minCount = sorted[0].repostCount || 0;
-  const candidatePool = sorted.filter((item) => (item.repostCount || 0) <= minCount + 1);
+  // Determine which category to pick next via Round-Robin:
+  // Find the most recently reposted video across the entire archive
+  const repostedItems = archive
+    .filter((item) => item.lastRepostedAt)
+    .sort((a, b) => new Date(b.lastRepostedAt).getTime() - new Date(a.lastRepostedAt).getTime());
 
-  const randomIndex = Math.floor(Math.random() * candidatePool.length);
-  return candidatePool[randomIndex];
+  let nextCategory = qualifiedCategories[0];
+
+  if (repostedItems.length > 0) {
+    const lastCategory = repostedItems[0].category;
+    const lastIdx = qualifiedCategories.indexOf(lastCategory);
+    if (lastIdx !== -1) {
+      // Advance to next category in round-robin sequence
+      nextCategory = qualifiedCategories[(lastIdx + 1) % qualifiedCategories.length];
+    }
+  }
+
+  const categoryItems = categoriesMap[nextCategory] || [];
+  if (categoryItems.length === 0) {
+    return null;
+  }
+
+  // STRICT REPOST COUNT LEVELING:
+  // 1. Find lowest repost count in this category (e.g. 0)
+  const minCount = Math.min(...categoryItems.map((item) => item.repostCount || 0));
+
+  // 2. Candidate pool: ONLY videos with repost_count === minCount
+  const strictCandidates = categoryItems.filter(
+    (item) => (item.repostCount || 0) === minCount
+  );
+
+  // 3. FIFO / Oldest-first tie-breaking:
+  // If lastRepostedAt exists, pick the least recently reposted; else pick oldest originalPostedAt or lowest ID
+  strictCandidates.sort((a, b) => {
+    const timeA = a.lastRepostedAt
+      ? new Date(a.lastRepostedAt).getTime()
+      : new Date(a.originalPostedAt || 0).getTime() || (a.id || 0);
+    const timeB = b.lastRepostedAt
+      ? new Date(b.lastRepostedAt).getTime()
+      : new Date(b.originalPostedAt || 0).getTime() || (b.id || 0);
+    return timeA - timeB;
+  });
+
+  const selectedItem = strictCandidates[0];
+
+  console.log(
+    `[Supabase Service] [ROUND-ROBIN] Selected Category: [${nextCategory}] | Repost Count Tier: ${minCount} | Video ID: #${selectedItem.id} (File ID: ${selectedItem.fileId?.slice(0, 15)}...) | Remaining in Tier ${minCount}: ${strictCandidates.length}`
+  );
+
+  return selectedItem;
 }
+
+// Backwards compatibility alias
+export const getRandomArchiveItem = getNextRoundRobinArchiveItem;
 
 /**
  * Increment repost count and update timestamp for an archived reel.
@@ -293,21 +348,34 @@ export async function markArchiveItemReposted(fileId) {
 }
 
 /**
- * Log live statistics of archived evergreen reels across all 10 categories.
+ * Log live statistics of archived evergreen reels across all 10 categories with repost count tiers.
  */
 export async function logArchiveStats() {
   const archive = await getArchive();
-  const categoryCounts = {};
+  const categoryStats = {};
 
   for (const item of archive) {
     const cat = item.category || "General";
-    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+    if (!categoryStats[cat]) {
+      categoryStats[cat] = { total: 0, tiers: {} };
+    }
+    categoryStats[cat].total += 1;
+    const count = item.repostCount || 0;
+    categoryStats[cat].tiers[count] = (categoryStats[cat].tiers[count] || 0) + 1;
   }
 
   console.log(`\n=========================================`);
   console.log(`[Nano Facts 10-Category Evergreen Library Stats]`);
-  for (const [catName, count] of Object.entries(categoryCounts)) {
-    console.log(`  - ${catName}: ${count} video(s)`);
+  for (const catName of SCIENCE_CATEGORIES) {
+    const stats = categoryStats[catName];
+    if (stats) {
+      const tierDetails = Object.entries(stats.tiers)
+        .map(([tier, qty]) => `Tier ${tier}: ${qty}`)
+        .join(", ");
+      console.log(`  - ${catName}: ${stats.total} video(s) [${tierDetails}]`);
+    } else {
+      console.log(`  - ${catName}: 0 video(s) (Empty)`);
+    }
   }
   console.log(`  - Total Evergreen Library: ${archive.length} video(s)`);
   console.log(`=========================================\n`);

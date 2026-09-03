@@ -3,6 +3,7 @@ import {
   getQueue,
   downloadVideoBuffer,
   archiveAndCleanupReel,
+  getNextRoundRobinArchiveItem,
   getRandomArchiveItem,
   markArchiveItemReposted,
   logArchiveStats,
@@ -91,9 +92,9 @@ export async function runReelsPublisherJob() {
       console.error("[Reels Publisher] [ERROR] Publishing failed across all platforms. Message kept in queue for retry.");
     }
   } else {
-    // 2. Fallback: Queue is empty -> Pick from Archive (Requires at least 10 videos per category)
+    // 2. Fallback: Queue is empty -> Pick from Archive via Strict 10-Category Round-Robin (Requires at least 10 videos per category)
     const MIN_ARCHIVE_COUNT = 10;
-    const archiveItem = await getRandomArchiveItem(MIN_ARCHIVE_COUNT);
+    const archiveItem = await getNextRoundRobinArchiveItem(MIN_ARCHIVE_COUNT);
 
     if (!archiveItem) {
       console.log(`[Reels Publisher] [INFO] Queue is empty and Archive has fewer than ${MIN_ARCHIVE_COUNT} videos. At least ${MIN_ARCHIVE_COUNT} archived videos are required per category before recycling starts to avoid repetitive posts. Waiting for new uploads in Channel 1.`);

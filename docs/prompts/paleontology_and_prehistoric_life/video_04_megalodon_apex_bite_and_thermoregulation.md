@@ -34,15 +34,15 @@ Photorealistic educational 3D paleontology visualization, vertical 9:16 format. 
 
 ### 🎥 Video Prompt (Image-to-Video using Screenshot #1 as Start Frame):
 ```text
-Continuous seamless tracking from the uploaded start frame. The Megalodon accelerates with powerful sweeps of its caudal fin toward an ancient baleen whale. Its cartilaginous jaws protrude outward and dislocate forward in classic lamniform fashion, revealing rows of 7-inch razor-sharp serrated teeth. HUD telemetry registers extreme crushing metrics: [ESTIMATED BITE FORCE: 180,000 N // 40,000 LBF] | [JAW SPAN: 3.0 METERS]. The jaws clamp onto the whale's flipper joint with devastating hydraulic force.
+Continuous seamless tracking from the uploaded start frame. The Megalodon accelerates with powerful sweeps of its caudal fin through sunlit ocean waters. Its cartilaginous jaws protrude outward in classic lamniform fashion, revealing rows of 7-inch razor-sharp serrated teeth. HUD telemetry displays extreme biomechanical force: [ESTIMATED BITE FORCE: 180,000 N // 40,000 LBF] | [JAW SPAN: 3.0 METERS]. Dynamic pressure waves ripple through the clear blue sea.
 ```
 
 ### 🎙️ Voiceover (Flow Audio):
-> *"Its jaws could open nine feet wide, delivering over one hundred eighty thousand Newtons of bite force—enough to crush an ancient whale's ribcage in a single strike."*
+> *"Its jaws could open nine feet wide, delivering over one hundred eighty thousand Newtons of bite force—more than five times greater than a T-Rex."*
 
 ### 📝 Timed Subtitles:
 * `[00:10 - 00:14]` "Its jaws opened 9 feet wide with 180,000 Newtons of force..."
-* `[00:15 - 00:20]` "Crushing an entire whale's ribcage in a single devastating bite!"
+* `[00:15 - 00:20]` "Delivering 5 times more biting power than a T-Rex!"
 
 ---
 
@@ -52,20 +52,20 @@ Continuous seamless tracking from the uploaded start frame. The Megalodon accele
 
 ---
 
-## 🎬 PHASE 3: CLIP 3 (00:20 - 00:30) — SERRATED TOOTH SHEAR & DEEP CRUISE
+## 🎬 PHASE 3: CLIP 3 (00:20 - 00:30) — SERRATED TOOTH ANATOMY & DEEP ABYSS CRUISE
 *(To be activated only after receiving User Screenshot #2)*
 
 ### 🎥 Video Prompt (Image-to-Video using Screenshot #2 as Start Frame):
 ```text
-Continuous seamless slow-motion macro tracking from the uploaded start frame. Close-up on the massive triangular tooth enamel showing microscopic serrations cleanly slicing through tough whale blubber and cartilage. As the prey is disabled, the Megalodon banks smoothly into the deep blue abyss with the sunbeams reflecting off its dorsal fin, reigning as the undisputed apex predator of the prehistoric seas.
+Continuous seamless slow-motion macro tracking from the uploaded start frame. Close-up view of the massive triangular tooth enamel showing intricate mineralized serration ridges under clear ocean water. The Megalodon turns and banks gracefully into the deep blue abyss, sunlight shimmering across its powerful dorsal fin as HUD displays hydrodynamic swimming efficiency: [HYDRODYNAMIC SWIMMING EFFICIENCY: 92%], gliding majestically through prehistoric open waters.
 ```
 
 ### 🎙️ Voiceover (Flow Audio):
-> *"With serrated teeth designed to sever swimming flippers and disable prey, Megalodon dominated Earth's oceans as the apex predator of all time."*
+> *"With serrated teeth and immense jaw power, Megalodon dominated Earth's oceans as the undisputed apex predator of all time."*
 
 ### 📝 Timed Subtitles:
-* `[00:20 - 00:24]` "Serrated teeth severed flippers to completely disable prey..."
-* `[00:25 - 00:30]` "Solidifying Megalodon as the greatest ocean predator of all time!"
+* `[00:20 - 00:24]` "With razor-sharp serrated teeth and immense jaw power..."
+* `[00:25 - 00:30]` "Megalodon reigned as the greatest ocean predator in history!"
 
 ---
 

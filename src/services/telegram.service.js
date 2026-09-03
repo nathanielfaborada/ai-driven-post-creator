@@ -7,6 +7,7 @@ import {
   removeFromQueue,
   getArchive,
   addToArchive,
+  getNextRoundRobinArchiveItem,
   getRandomArchiveItem,
   markArchiveItemReposted,
   logArchiveStats,
@@ -17,6 +18,7 @@ import {
 export {
   getQueue,
   getArchive,
+  getNextRoundRobinArchiveItem,
   getRandomArchiveItem,
   markArchiveItemReposted,
   logArchiveStats,
